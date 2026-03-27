@@ -18,17 +18,20 @@ html,body{height:100%;overflow:hidden;}
 body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;}
 
 /* ══════ HEADER ══════ */
-header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100A);border-bottom:2px solid var(--gold);padding:0 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(201,168,76,.18);position:relative;z-index:60;}
-.brand{display:flex;align-items:center;gap:9px;flex-shrink:0;}
-.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
-.brand h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:var(--gold);letter-spacing:4px;}
+header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100A);border-bottom:2px solid var(--gold);padding:0 10px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(201,168,76,.18);position:relative;z-index:60;gap:4px;}
+.brand{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.brand h1{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--gold);letter-spacing:3px;}
 .brand p{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.hdr-mid{display:flex;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:wrap;}
-.nav-tab{background:none;border:1px solid var(--border);border-radius:7px;padding:5px 9px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;transition:all .2s;white-space:nowrap;letter-spacing:.5px;}
+.hdr-mid{display:flex;align-items:center;gap:3px;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;padding:0 2px;}
+.hdr-mid::-webkit-scrollbar{display:none;}
+.nav-tab{background:none;border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;transition:all .2s;white-space:nowrap;letter-spacing:.5px;flex-shrink:0;}
 .nav-tab:hover,.nav-tab.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);}
-.hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.inv-pill{background:var(--gold-dim);border:1px solid var(--gold);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gold);font-weight:700;}
-.staff-badge{background:rgba(58,122,192,.15);border:1px solid var(--blue);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--blue);font-weight:600;cursor:pointer;}
+.hdr-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.inv-pill{background:var(--gold-dim);border:1px solid var(--gold);border-radius:20px;padding:3px 8px;font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;}
+.hdr-printer-pill{cursor:pointer;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid var(--border);color:var(--red);background:rgba(192,80,64,.08);flex-shrink:0;white-space:nowrap;transition:all .2s;}
+.hdr-printer-pill.connected{color:var(--green);background:rgba(74,154,90,.1);border-color:rgba(74,154,90,.4);}
+.staff-badge{background:rgba(58,122,192,.15);border:1px solid var(--blue);border-radius:20px;padding:3px 9px;font-size:10px;color:var(--blue);font-weight:600;cursor:pointer;white-space:nowrap;}
 .clk strong{color:var(--gold);font-size:13px;display:block;line-height:1.1;}
 .clk span{font-size:9px;color:var(--muted);}
 
@@ -55,7 +58,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 .login-footer{text-align:center;margin-top:18px;font-size:10px;color:var(--muted);}
 .login-session{text-align:center;font-size:10px;color:var(--muted);margin-top:10px;}
 /* logout button in header */
-.logout-btn{background:rgba(192,80,64,.12);border:1px solid rgba(192,80,64,.3);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer;transition:all .2s;}
+.logout-btn{background:rgba(192,80,64,.12);border:1px solid rgba(192,80,64,.3);border-radius:20px;padding:3px 9px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .logout-btn:hover{background:rgba(192,80,64,.22);border-color:var(--red);}
 @keyframes loginShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 .screen{display:none;height:calc(100vh - var(--hh));overflow:hidden;}
@@ -493,11 +496,11 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 
 /* Mobile landscape + small tablet (600–767px) */
 @media(max-width:767px){
-  :root{--hh:48px;}
+  :root{--hh:50px;}
   .brand h1{font-size:14px;letter-spacing:2px;}
   .brand p{display:none;}
-  .nav-tab{padding:4px 6px;font-size:9px;}
-  .inv-pill,.clk{display:none!important;}
+  .nav-tab{padding:4px 7px;font-size:9px;}
+  .inv-pill,.clk,.hdr-printer-pill{display:none!important;}
   .logout-btn{padding:3px 7px;font-size:9px;}
 
   /* POS layout — menu left, cart slides up */
@@ -571,11 +574,12 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 
 /* Mobile portrait (up to 599px) */
 @media(max-width:599px){
-  :root{--hh:46px;}
+  :root{--hh:48px;}
   .nav-tab span.ntxt{display:none;}
-  .nav-tab{padding:5px 7px;font-size:13px;}/* emoji only */
-  .hdr-mid{gap:3px;}
+  .nav-tab{padding:6px 8px;font-size:15px;}/* emoji only — bigger tap target */
+  .hdr-mid{gap:2px;}
   .brand h1{font-size:13px;letter-spacing:2px;}
+  .staff-badge .sbname{display:none;}/* hide staff name, show icon only */
 
   /* Menu grid — 3 columns */
   .menu-grid{grid-template-columns:repeat(3,1fr);gap:5px;}
@@ -622,9 +626,10 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 /* Very small phones (up to 380px) */
 @media(max-width:380px){
   .menu-grid{grid-template-columns:repeat(2,1fr);}
-  .nav-tab{padding:4px 5px;font-size:11px;}
+  .nav-tab{padding:5px 6px;font-size:14px;}
   .psubs{grid-template-columns:1fr;}
   .psub{flex-direction:row;gap:6px;justify-content:center;}
+  .brand h1{display:none;}/* Show only icon on very small */
 }
 
 /* iOS safe area support */
@@ -709,8 +714,8 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
   </div>
   <div class="hdr-right">
     <span class="inv-pill" id="invPill">INV #1001</span>
-    <span id="hdrPrinterStatus" onclick="requirePin('admin',null)" title="Printer status — click to open settings" style="cursor:pointer;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--red);background:rgba(192,80,64,.08);flex-shrink:0;">🔴 No Printer</span>
-    <span class="staff-badge" id="staffBadge" onclick="switchStaff()">👤 Staff</span>
+    <span id="hdrPrinterStatus" class="hdr-printer-pill" onclick="requirePin('admin',null)" title="Printer — click to manage">🔴 No Printer</span>
+    <span class="staff-badge" id="staffBadge" onclick="switchStaff()">👤 <span class="sbname">Staff</span></span>
     <span id="syncDot" onclick="syncAllData()" style="cursor:pointer;font-size:16px;color:#8A7A5A;line-height:1;user-select:none;" title="Click to sync Google Sheets">●</span>
     <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
     <div class="clk"><strong id="clkT">--:--</strong><span id="clkD"></span></div>
@@ -2177,19 +2182,11 @@ function renderSettings(){
       <span id="kotStatus" style="font-size:11px;font-weight:700;color:var(--red)">🔴 Not connected</span>
     </div>
 
-    <div style="background:rgba(58,122,192,.06);border:1px solid rgba(58,122,192,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.5px;margin-bottom:8px">🌐 LAN / WiFi (Recommended for computer)</div>
-      <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:7px">
-        <input class="si2" id="kotLanIp" placeholder="Printer IP e.g. 192.168.1.50" value="${S.g('kotLanIp','')}">
-        <input class="si2" id="kotLanPort" placeholder="Port" value="${S.g('kotLanPort','9100')}">
-        <input class="si2" id="kotRelayPort" placeholder="Relay" value="${S.g('kotRelayPort','3000')}">
-      </div>
-      <button class="btn-g" style="width:100%" onclick="kotPrinter.connectLAN()">🌐 Connect via LAN</button>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6">
-        Printer IP: check printer config slip → WiFi → STA IP or AP IP (192.168.223.1)<br>
-        Port: <strong style="color:var(--text)">9100</strong> (from config slip) · Relay port: <strong style="color:var(--text)">3000</strong> (relay-server.js on your PC)<br>
-        <span style="color:var(--orange)">⚠ Start relay-server.js on your computer first!</span>
-      </div>
+    <div style="background:rgba(138,80,192,.06);border:1px solid rgba(138,80,192,.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:9px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--purple);font-size:10px;">ℹ️ Setup Guide</strong><br>
+      <strong style="color:var(--text)">PC (USB):</strong> Open this file in Chrome → Connect USB below<br>
+      <strong style="color:var(--text)">Android (BT):</strong> Open GitHub URL in Chrome → Connect Bluetooth<br>
+      <strong style="color:var(--text)">iPhone:</strong> Bluetooth not supported on iOS — use PC for printing
     </div>
 
     <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:10px 12px;margin-bottom:10px">
@@ -2366,37 +2363,7 @@ var kotPrinter = {
     }
   },
 
-  // ── LAN/TCP connect (KPC307-UEWB via relay server) ──
-  connectLAN: async function() {
-    const ip = document.getElementById('kotLanIp') ? document.getElementById('kotLanIp').value.trim() : '';
-    const port = document.getElementById('kotLanPort') ? document.getElementById('kotLanPort').value.trim() : '9100';
-    if(!ip){ toast('❌ Enter printer IP address','err'); return false; }
-    // Relay server runs locally on your PC/server — see relay-server.js
-    const relayPort = document.getElementById('kotRelayPort') ? document.getElementById('kotRelayPort').value.trim() : '3000';
-    const url = 'http://localhost:'+relayPort+'/print?ip='+encodeURIComponent(ip)+'&port='+encodeURIComponent(port);
-    this.lanUrl = url;
-    S.s('kotLanUrl', url);
-    S.s('kotLanIp', ip);
-    S.s('kotLanPort', port);
-    S.s('kotRelayPort', relayPort);
-    // Test connection with a small ping
-    try {
-      const resp = await fetch('http://localhost:'+relayPort+'/ping', {method:'GET'});
-      if(!resp.ok) throw new Error('Relay not OK');
-      this.type = 'lan';
-      S.s('kotType','lan');
-      toast('✅ LAN Printer ready — '+ip+':'+port,'ok');
-      this.updateStatus();
-      return true;
-    } catch(e) {
-      toast('⚠️ Relay server not running! Start relay-server.js on your PC first.','err');
-      // Still save config — user can try printing anyway
-      this.type = 'lan';
-      S.s('kotType','lan');
-      this.updateStatus();
-      return false;
-    }
-  },
+
 
   // ── Wired/USB connect via Web Serial ──
   connectWired: async function() {
@@ -2445,18 +2412,6 @@ var kotPrinter = {
           // Small delay so printer buffer doesn't overflow
           if(i+chunkSize < bytes.length) await new Promise(r=>setTimeout(r,30));
         }
-
-      // ── LAN via relay server ──
-      } else if(this.type==='lan'){
-        const relayPort = S.g('kotRelayPort','3000');
-        const ip = S.g('kotLanIp','');
-        const port = S.g('kotLanPort','9100');
-        const resp = await fetch('http://localhost:'+relayPort+'/print?ip='+encodeURIComponent(ip)+'&port='+encodeURIComponent(port), {
-          method:'POST',
-          headers:{'Content-Type':'application/octet-stream'},
-          body: bytes
-        });
-        if(!resp.ok) throw new Error('Relay responded: '+resp.status);
 
       // ── USB/Wired ──
       } else if(this.type==='wired' && this.device){
@@ -2526,31 +2481,27 @@ var kotPrinter = {
   },
 
   isConnected: function(){
-    return !!(this.device||this.characteristic||this.type==='lan');
+    return !!(this.device||this.characteristic);
   },
 
   updateStatus: function(){
     const el  = document.getElementById('kotStatus');
     const hdr = document.getElementById('hdrPrinterStatus');
-    const labels = {'bluetooth':'BT','wired':'USB','lan':'LAN'};
-    const fullLabels = {'bluetooth':'Bluetooth','wired':'USB/Wired','lan':'LAN (TCP)'};
+    const labels = {'bluetooth':'BT','wired':'USB'};
+    const fullLabels = {'bluetooth':'Bluetooth','wired':'USB/Wired'};
     if(this.type){
       const lbl = fullLabels[this.type] || this.type;
       const short = labels[this.type] || this.type;
       if(el){ el.textContent='🟢 Connected ('+lbl+')'; el.style.color='var(--green)'; }
       if(hdr){
         hdr.textContent='🟢 '+short;
-        hdr.style.color='var(--green)';
-        hdr.style.background='rgba(74,154,90,.1)';
-        hdr.style.borderColor='rgba(74,154,90,.4)';
+        hdr.className='hdr-printer-pill connected';
       }
     } else {
       if(el){ el.textContent='🔴 Not connected'; el.style.color='var(--red)'; }
       if(hdr){
         hdr.textContent='🔴 No Printer';
-        hdr.style.color='var(--red)';
-        hdr.style.background='rgba(192,80,64,.08)';
-        hdr.style.borderColor='var(--border)';
+        hdr.className='hdr-printer-pill';
       }
     }
   }
@@ -2603,15 +2554,7 @@ const lowStockItems=menuItems.filter(i=>i.stock<=i.lowAt&&i.stock>0);
 const outItems=menuItems.filter(i=>i.stock<=0);
 if(outItems.length)toast('⚠️ '+outItems.length+' items out of stock!','err');
 else if(lowStockItems.length)toast('⚠️ '+lowStockItems.length+' items running low');
-// Auto-restore LAN printer type on reload (LAN needs no device object)
-(function restorePrinterState(){
-  const saved = S.g('kotType', null);
-  if(saved === 'lan'){
-    kotPrinter.type = 'lan';
-    setTimeout(()=>{ kotPrinter.updateStatus(); toast('🌐 LAN printer restored','ok'); }, 800);
-  }
-  // BT/USB cannot be auto-restored — browser security requires user gesture
-})();
+// BT/USB cannot be auto-restored — browser security requires user gesture each session
 // Check login session — hide login screen if already authenticated
 if(checkSession()){
   document.getElementById('loginScreen').classList.add('hidden');
