@@ -1045,8 +1045,12 @@ var kotPrinter={
         return true;
       }catch(e){
         if(e.name==='NotFoundError'){return false;}
-        console.log('WebUSB failed:',e.message,'\u2014 trying Web Serial...');
-        toast('\u26a0\ufe0f WebUSB: '+e.message+'. Trying Serial...','err');
+        console.log('WebUSB failed:',e.message);
+        if(e.message&&(e.message.indexOf('Access denied')>=0||e.message.indexOf('access denied')>=0)){
+          toast('\u274c USB blocked by Windows driver. Use Bluetooth instead! (Admin \u2192 Connect Bluetooth)','err');
+          return false;
+        }
+        toast('\u26a0\ufe0f WebUSB: '+e.message,'err');
       }
     }
     // 2. Web Serial fallback (needs COM port / VCP driver)
