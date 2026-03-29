@@ -964,11 +964,43 @@ var kotPrinter={
     }catch(e){if(e.name!=='NotFoundError')toast('\u274c Bluetooth: '+e.message,'err');return false;}
   },
   connectWired:async function(){
-    try{if(!navigator.serial){toast('\u274c Web Serial not supported.','err');return false;}toast('\ud83d\udd0c Select printer USB port\u2026');const port=await navigator.serial.requestPort();await port.open({baudRate:115200});this.device=port;this.type='wired';S.s('kotType','wired');toast('\u2705 USB Printer connected!','ok');this.updateStatus();return true;}
-    catch(e){if(e.name!=='NotFoundError')toast('\u274c USB error: '+e.message,'err');return false;}
+    // Try WebUSB first (no driver needed - works with KPC307-UEWB directly)
+    if(navigator.usb){
+      try{
+        toast('\ud83d\udd0c Select your KPC307-UEWB printer\u2026');
+        const device=await navigator.usb.requestDevice({filters:[]});
+        await device.open();
+        if(device.configuration===null)await device.selectConfiguration(1);
+        // Try to claim interface 0 (printer interface)
+        let claimed=false;
+        for(let ifNum=0;ifNum<device.configuration.interfaces.length;ifNum++){
+          try{await device.claimInterface(ifNum);claimed=true;break;}catch(e){}
+        }
+        if(!claimed){await device.close();throw new Error('Could not claim USB interface');}
+        this.device=device;this.type='usb';S.s('kotType','usb');
+        toast('\u2705 USB Connected: '+(device.productName||'KOT Printer'),'ok');
+        this.updateStatus();return true;
+      }catch(e){
+        if(e.name==='NotFoundError'){return false;}
+        // Fall through to Web Serial if WebUSB fails
+        console.log('WebUSB failed, trying Web Serial:',e.message);
+      }
+    }
+    // Fallback: Web Serial (requires COM port driver)
+    if(navigator.serial){
+      try{
+        toast('\ud83d\udd0c Select printer COM port\u2026');
+        const port=await navigator.serial.requestPort();
+        await port.open({baudRate:115200});
+        this.device=port;this.type='wired';S.s('kotType','wired');
+        toast('\u2705 Serial port connected!','ok');this.updateStatus();return true;
+      }catch(e){if(e.name!=='NotFoundError')toast('\u274c USB error: '+e.message,'err');return false;}
+    }
+    toast('\u274c No USB/Serial support in this browser. Use Chrome.','err');
+    return false;
   },
   print:async function(text){
-    if(!this.device&&!this.characteristic&&this.type!=='lan'){toast('\u26a0\ufe0f No printer connected','err');return false;}
+    if(!this.device&&!this.characteristic){toast('\u26a0\ufe0f No printer connected. Go Admin > KOT Printer to connect.','err');return false;}
     try{
       const bytes=this.textToBytes(text);
       if(this.type==='bluetooth'&&this.characteristic){
@@ -981,6 +1013,20 @@ var kotPrinter={
           else{await this.characteristic.writeValue(chunk);}
           // PATCH 2: delay increased from 30ms to 80ms to prevent buffer overflow
           if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,80));
+        }
+      }else if(this.type==='usb'&&this.device){
+        // WebUSB — find bulk OUT endpoint and send
+        let epNum=1; // default
+        try{
+          const iface=this.device.configuration.interfaces[0];
+          const ep=iface.alternate.endpoints.find(function(e){return e.direction==='out'&&e.type==='bulk';});
+          if(ep)epNum=ep.endpointNumber;
+        }catch(e){}
+        // Send in chunks to avoid USB buffer overflow
+        const usbChunk=512;
+        for(let i=0;i<bytes.length;i+=usbChunk){
+          await this.device.transferOut(epNum,bytes.slice(i,i+usbChunk));
+          if(i+usbChunk<bytes.length)await new Promise(r=>setTimeout(r,20));
         }
       }else if(this.type==='wired'&&this.device){
         const writer=this.device.writable.getWriter();await writer.write(bytes);writer.releaseLock();
@@ -1006,9 +1052,13 @@ var kotPrinter={
     return new Uint8Array(bytes);
   },
   encode:function(str){return Array.from(str).map(c=>{const code=c.charCodeAt(0);return(code<128)?code:63;});},
-  disconnect:function(){try{if(this.type==='bluetooth'&&this.device&&this.device.gatt)this.device.gatt.disconnect();if(this.type==='wired'&&this.device)this.device.close();}catch(e){}this.device=null;this.characteristic=null;this.type=null;S.s('kotType',null);toast('Printer disconnected');this.updateStatus();},
+  disconnect:function(){try{
+    if(this.type==='bluetooth'&&this.device&&this.device.gatt)this.device.gatt.disconnect();
+    if(this.type==='wired'&&this.device)this.device.close();
+    if(this.type==='usb'&&this.device)this.device.close();
+  }catch(e){}this.device=null;this.characteristic=null;this.type=null;S.s('kotType',null);toast('Printer disconnected');this.updateStatus();},
   isConnected:function(){return!!(this.device||this.characteristic);},
-  updateStatus:function(){const el=document.getElementById('kotStatus');const hdr=document.getElementById('hdrPrinterStatus');const labels={'bluetooth':'BT','wired':'USB'};const fullLabels={'bluetooth':'Bluetooth','wired':'USB/Wired'};if(this.type){const lbl=fullLabels[this.type]||this.type;const short=labels[this.type]||this.type;if(el){el.textContent='\ud83d\udfe2 Connected ('+lbl+')';el.style.color='var(--green)';}if(hdr){hdr.textContent='\ud83d\udfe2 '+short;hdr.className='hdr-printer-pill connected';}}else{if(el){el.textContent='\ud83d\udd34 Not connected';el.style.color='var(--red)';}if(hdr){hdr.textContent='\ud83d\udd34 No Printer';hdr.className='hdr-printer-pill';}}}
+  updateStatus:function(){const el=document.getElementById('kotStatus');const hdr=document.getElementById('hdrPrinterStatus');const labels={'bluetooth':'BT','wired':'Serial','usb':'USB'};const fullLabels={'bluetooth':'Bluetooth','wired':'Serial/COM','usb':'USB Direct'};if(this.type){const lbl=fullLabels[this.type]||this.type;const short=labels[this.type]||this.type;if(el){el.textContent='\ud83d\udfe2 Connected ('+lbl+')';el.style.color='var(--green)';}if(hdr){hdr.textContent='\ud83d\udfe2 '+short;hdr.className='hdr-printer-pill connected';}}else{if(el){el.textContent='\ud83d\udd34 Not connected';el.style.color='var(--red)';}if(hdr){hdr.textContent='\ud83d\udd34 No Printer';hdr.className='hdr-printer-pill';}}}
 };
 
 // PATCH 3: sendKOT now prints BOTH Customer Receipt AND Kitchen KOT
