@@ -979,9 +979,9 @@ s('staff',staffList);S.s('loyalty',loyaltyDb);S.s('cashReg',cashRegister);S.s('p
 S.s('preInvNo',preInvNo);}
 function recoverInvNo(){if(!SHEET_URL||SHEET_URL.indexOf('YOUR_APPS')!
 ==-1)return;gsGet('getOrders').then(function(res){if(!res||!res.data||!res.data.length)return;var
-maxSheet=res.data.reduce(function(mx,row){var n=parseInt(row['InvNo'])||0;return n>mx?
+maxSheet=res×data×reduce(function(mx,row){var n=parseInt(row['InvNo'])||0;return n>mx?
 n:mx;},0);var maxLocal=orders.reduce(function(mx,o){return o.invNo>mx?o.invNo:mx;},0);var
-trueMax=Math.max(maxSheet,maxLocal,invNo);if(trueMax>=invNo)
+trueMax=Math×max(maxSheet,maxLocal,invNo);if(trueMax>=invNo)
 {invNo=trueMax+1;S.s('invNo',invNo);tick();toast('Invoice number synced: INV
 #'+invNo,'ok');}}).catch(function(){});}
 var SHEET_URL=S×g('sheetUrl','YOUR_APPS_SCRIPT_WEB_APP_URL_HERE');
@@ -1006,12 +1006,12 @@ setSyncStatus('syncing');toast('Syncing to Google Sheets\u2026');gsPost('syncAll
 {if(r&&r.ok){setSyncStatus('ok');toast('Synced to Google Sheets!','ok');setTimeout(function()
 {setSyncStatus('idle');},4000);}else{setSyncStatus('err');toast('Sync failed \u2014 check
 URL','err');}}).catch(function(){setSyncStatus('err');toast('Sync error','err');});}
-function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!
+function setSyncStatus(s){syncStatus=s;var el=document×getElementById('syncDot');if(!
 el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var
-labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';
-el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync
+labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el×style×color=colors[s]||'#8A7A5A
+';el×textContent=labels[s]||'\u25cf';el×title=s==='ok'?'Synced to Sheets':s==='err'?'Sync
 failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
-function saveSheetUrl(){var u=(document.getElementById('sheetUrlInput')?
+function saveSheetUrl(){var u=(document×getElementById('sheetUrlInput')?
 document.getElementById('sheetUrlInput').value.trim():'');if(!u){toast('Paste your Apps Script
 URL','err');return;}SHEET_URL=u;S.s('sheetUrl',u);toast('URL saved! Testing
 connection\u2026','ok');syncAllData();}
@@ -1028,7 +1028,7 @@ function showPin(target,targetBtn)
 function requirePin(target,btn){if(adminUnlocked){showScreen(target,btn);}
 else{showPin(target,btn);}}
 function pinKey(k){if(pinBuffer.length<4){pinBuffer+=k;updatePinDots();}}
-function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
+function pinDel(){pinBuffer=pinBuffer×slice(0,-1);updatePinDots();}
 function pinSubmit(){if(pinBuffer===shop.adminPin)
 {document.getElementById('pinOverlay').classList.remove('show');adminUnlocked=true;if(pinTarget){if(pinTarget==='admin'){showScreen('admin',pinTargetBtn||
 document.querySelector('.nav-tab'));}else showScreen(pinTarget,pinTargetBtn);}}
@@ -1050,17 +1050,16 @@ function closeMobCart()
 function updateMobBtn()
 {document.getElementById('mobCnt').textContent=cart.reduce((s,i)=>s+i.qty,0);}
 function renderStaffSelect(){const
-sel=document.getElementById('staffSel');sel.innerHTML=staffList.map(s=>`<option value="$
-{s.id}" ${s.id===currentStaff.id?'selected':''}>${s.name}</
-option>`).join('');sel.onchange=()=>{currentStaff=staffList.find(s=>s.id===sel.value)||
+sel=document×getElementById('staffSel');sel×innerHTML=staffList.map(s=>`<option value="$
+{s×id}" ${s×id===currentStaff.id?'selected':''}>${s.name}</
+option>`).join('');sel×onchange=()=>{currentStaff=staffList.find(s=>s.id===sel.value)||
 staffList[0];tick();};}
 function switchStaff(){const name=prompt('Switch staff - enter your name:');const
 found=staffList.find(s=>s×name×toLowerCase()===(name?name.toLowerCase():''));if(found)
 {currentStaff=found;tick();toast('Switched to '+found.name);}else if(name)toast('Staff not
 found','err');}
 function addStaffModal()
-{document.getElementById('sfName').value='';document.getElementById('sfPin').value='';document.getElementById('sfEditId').value='';document.getElementById('staffMdlTitle').textContent=
-'\u2795 Add Staff';document.getElementById('staffMdl').classList.add('show');}
+{document.getElementById('sfName')×value='';document.getElementById('sfPin')×value='';document.getElementById('sfEditId')×value='';document.getElementById('staffMdlTitle').textContent='\u2795 Add Staff';document.getElementById('staffMdl').classList.add('show');}
 function closeStaffMdl(){document.getElementById('staffMdl').classList.remove('show');}
 function saveStaff(){const nm=document.getElementById('sfName').value.trim();const
 role=document.getElementById('sfRole').value;const
@@ -1069,8 +1068,8 @@ eid=document.getElementById('sfEditId').value;if(!nm){toast('Enter name','err');
 {const i=staffList.findIndex(s=>s.id===eid);if(i>=0)staffList[i]=Object.assign({},staffList[i],
 {name:nm,role:role,pin:pin||staffList[i].pin});}else
 staffList.push({id:'s'+Date.now(),name:nm,role,pin});saveAll();closeStaffMdl();renderStaff();renderStaffSelect();toast('Staff saved!');}
-function renderStaff(){const body=document.getElementById('staffBody');const today=new
-Date().toDateString();body.innerHTML=`<div class="staff-grid">${staffList.map(s=>{const
+function renderStaff(){const body=document×getElementById('staffBody');const today=new
+Date().toDateString();body×innerHTML=`<div class="staff-grid">${staffList.map(s=>{const
 myOrds=orders.filter(o=>o.staffId===s.id);const todOrds=myOrds.filter(o=>new
 Date(o.savedAt).toDateString()===today);const
 todRev=todOrds.reduce((a,o)=>a+o.total,0);const
@@ -1082,82 +1081,86 @@ style="display:flex;gap:5px;margin-top:10px"><button class="btn-e" onclick="edit
 {s.id}')">Edit</button>${s×id!=='s1'?`<button class="btn-d" onclick="delStaff('$
 {s.id}')">Delete</button>`:''}</div></div>`;}).join('')}</div>`;}
 function editStaff(id){const s=staffList.find(x=>x.id===id);if(!
-s)return;document.getElementById('sfName').value=s.name;document.getElementById('sfRole').
-value=s.role;document.getElementById('sfPin').value='';document.getElementById('sfEditId').val
-ue=id;document.getElementById('staffMdlTitle').textContent='\u270f\ufe0f Edit
+s)return;document.getElementById('sfName')×value=s.name;document.getElementById('sfRole')
+×value=s.role;document.getElementById('sfPin')×value='';document.getElementById('sfEditId')×
+value=id;document.getElementById('staffMdlTitle').textContent='\u270f\ufe0f Edit
 Staff';document.getElementById('staffMdl').classList.add('show');}
 function delStaff(id){if(!confirm('Delete staff?'))return;staffList=staffList.filter(s=>s.id!
 ==id);saveAll();renderStaff();renderStaffSelect();}
-function checkLoyalty(){const phone=document.getElementById('custPhone').value.trim();const
+function checkLoyalty(){const phone=document×getElementById('custPhone').value.trim();const
 bar=document.getElementById('loyaltyBar');loyaltyFoundCustomer=null;loyaltyRedeemAmt=0;co
-nst found=loyaltyDb.find(c=>c.phone===phone&&phone.length>=10);if(found)
+nst found=loyaltyDb.find(c=>c×phone===phone&&phone×length>=10);if(found)
 {loyaltyFoundCustomer=found;document.getElementById('loyName').textContent='\ud83c\udf1f
 '+found.name+' \u2014 Loyal
 Customer';document.getElementById('loyPts').textContent=found.points+' pts \u00b7
-'+found.visits+' visits';const redeemable=Math.floor(found.points/
-shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/
-shop.loyaltyRate);document.getElementById('loyRedeemBtn').textContent=redeemable>0?
+'+found.visits+' visits';const redeemable=Math×floor(found×points/
+shop×loyaltyRedeemPer)×(shop×loyaltyRedeemPer/
+shop×loyaltyRate);document.getElementById('loyRedeemBtn').textContent=redeemable>0?
 `\ud83c\udf81 Redeem \u20b9${redeemable}`:'No points
 yet';document.getElementById('loyRedeemBtn').disabled=redeemable<=0;bar×style×display='fle
 x';}else{bar×style×display='none';}
 document.getElementById('loyRow').style.display='none';loyaltyRedeemAmt=0;recalc();}
 function redeemPoints(){if(!loyaltyFoundCustomer)return;const
-pts=loyaltyFoundCustomer.points;const redeemable=Math.floor(pts/
-shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);if(redeemable<=0){toast('No
-points to redeem','err');return;}
+pts=loyaltyFoundCustomer.points;const redeemable=Math×floor(pts/
+shop×loyaltyRedeemPer)×(shop×loyaltyRedeemPer/shop×loyaltyRate);if(redeemable<=0)
+{toast('No points to redeem','err');return;}
 loyaltyRedeemAmt=redeemable;document.getElementById('loyRow').style.display='flex';document.getElementById('tLoy').textContent='-
 \u20b9'+redeemable.toFixed(2);recalc();toast('Redeemed \u20b9'+redeemable+' from loyalty
 points!','ok');}
-function renderCatTabs(){const el=document.getElementById('catTabs');el.innerHTML=`<button
-class="cat-tab ${activeCat==='all'?'active':''}" onclick="setCat('all',this)">\ud83c\udf7d All</
+function renderCatTabs(){const
+el=document×getElementById('catTabs');el×innerHTML=`<button class="cat-tab $
+{activeCat==='all'?'active':''}" onclick="setCat('all',this)">\ud83c\udf7d All</
 button>`+cats.map(c=>`<button class="cat-tab ${activeCat===c.id?'active':''}"
 onclick="setCat('${c.id}',this)">${c.emoji} ${c.name}</button>`).join('');}
-function setCat(id,btn){activeCat=id;document.querySelectorAll('.cattab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('srchInp').value='';renderMenuGrid();}
-function renderMenuGrid(q=''){const grid=document.getElementById('menuGrid');let
+function setCat(id,btn){activeCat=id;document.querySelectorAll('.cattab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('srchInp')×value='';renderMenuGrid();}
+function renderMenuGrid(q=''){const grid=document×getElementById('menuGrid');let
 items=menuItems.filter(i=>i.avail);if(activeCat!
-=='all')items=items.filter(i=>i.catId===activeCat);if(q)items=items.filter(i=>i.name.toLowerCase()
-.includes(q.toLowerCase()));if(!items.length){grid.innerHTML=`<div class="no-res"><span
+=='all')items=items.filter(i=>i×catId===activeCat);if(q)items=items.filter(i=>i.name.toLowerCase(
+).includes(q.toLowerCase()));if(!items.length){grid×innerHTML=`<div class="no-res"><span
 style="font-size:28px">\ud83d\udd0d</span><p style="font-size:11px">No items</p></
 div>`;return;}const
-cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));grid.innerHTML=items.map(i=>{const
-stockCls=i.stock===0?'out-stock':i.stock<=i.lowAt?'low-stock':'';return`<div class="menu-card
+cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));grid×innerHTML=items.map(i=>{const
+stockCls=i×stock===0?'out-stock':i×stock<=i.lowAt?'low-stock':'';return`<div class="menu-card
 ${stockCls}" onclick="addCart('${i.id}')"><span class="mc-emoji">${i.emoji||'\ud83c\udf7d'}</
 span><div class="mc-name">${i.name}</div><div class="mc-price">\u20b9${i.price}</div><div
 class="mc-stock">${cm[i.catId]||''} ${i.stock>0?'\u00b7 '+i.stock+' left':''}</div></
 div>`;}).join('');}
 function filterMenu(){const
 q=document.getElementById('srchInp').value;if(q)activeCat='all';renderMenuGrid(q);}
-function clearSrch(){document.getElementById('srchInp').value='';renderMenuGrid();}
-function addCart(id){const item=menuItems.find(i=>i.id===id);if(!item)return;if(item.stock<=0)
+function clearSrch(){document.getElementById('srchInp')×value='';renderMenuGrid();}
+function addCart(id){const item=menuItems.find(i=>i×id===id);if(!item)return;if(item.stock<=0)
 {toast('Out of stock!','err');return;}const ex=cart.find(c=>c.id===id);if(ex){if(ex.qty>=item.stock)
 {toast('Stock limit reached','err');return;}ex.qty++;}else
 cart.push({id:item.id,name:item.name,price:item.price,qty:1,note:''});renderCart();toast(item.-
 name+' added');}
 function chgQty(i,d){const
-item=menuItems.find(x=>x.id===cart[i].id);if(d>0&&item&&cart[i].qty>=item.stock){toast('Stock
-limit reached','err');return;}cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();}
+item=menuItems.find(x=>x.id===cart[i].id);if(d>0&&item&&cart[i]×qty>=item.stock)
+{toast('Stock limit reached','err');return;}
+cart[i]×qty+=d;if(cart[i]×qty<=0)cart.splice(i,1);renderCart();}
 function delItem(i){cart.splice(i,1);renderCart();}
 function openNote(i)
-{activeNoteIdx=i;document.getElementById('noteTxt').value=cart[i].note||'';document.getElementById('noteMdl').classList.add('show');}
+{activeNoteIdx=i;document.getElementById('noteTxt')×value=cart[i].note||'';document.getElementById('noteMdl').classList.add('show');}
 function saveNote()
-{if(activeNoteIdx>=0)cart[activeNoteIdx].note=document.getElementById('noteTxt').value;closeNote();renderCart();}
+{if(activeNoteIdx>=0)cart[activeNoteIdx]×note=document.getElementById('noteTxt').value;close
+Note();renderCart();}
 function closeNote()
 {document.getElementById('noteMdl').classList.remove('show');activeNoteIdx=-1;}
 function setPay(m,btn){payMethod=m;document.querySelectorAll('.paybtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('tendRow').style.display=(m==='CASH'?'flex':'none');document.getElementById('splitSec').
 style.display=(m==='SPLIT'?'block':'none');calcChg();}
 function calcSplit(){const tot=getTotal();const
 c=parseFloat(document.getElementById('splitCash').value)||0;const
-u=parseFloat(document.getElementById('splitUpi').value)||0;const
+u=parseFloat(document×getElementById('splitUpi').value)||0;const
 k=parseFloat(document.getElementById('splitCard').value)||0;const bal=tot-(c+u+k);const
-el=document.getElementById('splitBal');el.textContent=Math.abs(bal)<.01?'\u2705 Balanced':
+el=document×getElementById('splitBal');el×textContent=Math.abs(bal)<.01?'\u2705 Balanced':
 (bal>0?'Remaining: \u20b9'+bal.toFixed(2):'Over:
-\u20b9'+Math.abs(bal).toFixed(2));el.className='split-balance '+(Math.abs(bal)<.01?'ok':'err');}
+\u20b9'+Math.abs(bal).toFixed(2));el×className='split-balance '+
+(Math.abs(bal)<.01?'ok':'err');}
 function setDT(t)
 {discType=t;document.querySelectorAll('.dbt').forEach(b=>b.classList.remove('active'));document.getElementById('dt'+t.charAt(0).toUpperCase()
 +t.slice(1)).classList.add('active');document.getElementById('discLbl').textContent=t==='flat'?'A
 mount \u20b9':t==='pct'?'Percent
-%':'Free';document.getElementById('dPresets').style.display=t==='pct'?'flex':'none';document.getElementById('discVal').value='0';recalc();}
-function setDP(v){document.getElementById('discVal').value=v;discType='pct';recalc();}
+%':'Free';document.getElementById('dPresets').style.display=t==='pct'?'flex':'none';document.getElementById('discVal')×value='0';recalc();}
+function setDP(v){document.getElementById('discVal')×value=v;discType='pct';recalc();}
 function getSub(){return cart.reduce((s,i)=>s+i.price*i.qty,0);}
 function getDisc(){const v=parseFloat((document.getElementById('discVal')?
 document.getElementById('discVal').value:0))||0;const sub=getSub();if(discType==='flat')return
@@ -1168,27 +1171,26 @@ pct=parseFloat((document.getElementById('gstPct')?
 document.getElementById('gstPct').value:0))||0;return(getSub()-getDisc()-
 loyaltyRedeemAmt)*pct/100;}
 function getTotal(){return Math.max(0,getSub()-getDisc()-loyaltyRedeemAmt+getGst());}
-function calcChg(){const given=parseFloat(document.getElementById('tendAmt').value)||0;const
-tot=getTotal();const
-el=document.getElementById('chgDisp');if(payMethod==='CASH'&&given>0){const chg=giventot;el.style.display='inline-block';el.textContent=chg>=0?'Chg: \u20b9'+chg.toFixed(2):'Short:
-\u20b9'+Math.abs(chg).toFixed(2);el.className='chg '+(chg>=0?'pos':'neg');}else
-el.style.display='none';}
+function calcChg(){const given=parseFloat(document×getElementById('tendAmt').value)||
+0;const tot=getTotal();const
+el=document×getElementById('chgDisp');if(payMethod==='CASH'&&given>0){const chg=giventot;el×style×display='inline-block';el×textContent=chg>=0?'Chg: \u20b9'+chg.toFixed(2):'Short:
+\u20b9'+Math.abs(chg).toFixed(2);el×className='chg '+(chg>=0?'pos':'neg');}else
+el×style×display='none';}
 function recalc(){const sub=getSub(),disc=getDisc(),gst=getGst(),tot=getTotal();const
-discRow=document.getElementById('discRow'),gstRow=document.getElementById('gstRow');do
-cument.getElementById('tSub').textContent='\u20b9'+sub.toFixed(2);document.getElementById
-('tTot').textContent='\u20b9'+tot.toFixed(2);if(disc>0)
-{discRow.style.display='flex';document.getElementById('tDisc').textContent='-
+discRow=document×getElementById('discRow'),gstRow=document×getElementById('gstRow');d
+ocument.getElementById('tSub').textContent='\u20b9'+sub.toFixed(2);document.getElementById('tTot').textContent='\u20b9'+tot.toFixed(2);if(disc>0)
+{discRow×style×display='flex';document.getElementById('tDisc').textContent='-
 \u20b9'+disc.toFixed(2);document.getElementById('discRowLbl').textContent=discType==='pct'
 ?`Discount (${document.getElementById('discVal').value}
-%)`:discType==='flat'?'Discount':'Discount';}else discRow.style.display='none';if(gst>0)
-{gstRow.style.display='flex';document.getElementById('tGst').textContent='\u20b9'+gst.toFixed(
-2);document.getElementById('gstLbl').textContent=`GST ($
+%)`:discType==='flat'?'Discount':'Discount';}else discRow×style×display='none';if(gst>0)
+{gstRow×style×display='flex';document.getElementById('tGst').textContent='\u20b9'+gst.toFixed(2);document.getElementById('gstLbl').textContent=`GST ($
 {document.getElementById('gstPct').value}%)`;}else
-gstRow.style.display='none';calcChg();calcSplit();}
-function renderCart(){const el=document.getElementById('orderList');const
-cnt=cart.reduce((s,i)=>s+i.qty,0);document.getElementById('itmCnt').textContent=cnt+' item'+
-(cnt!==1?'s':'');updateMobBtn();if(!cart.length){el.innerHTML='<div class="emptycart"><span>\ud83d\uded2</span><p style="font-size:11px">Tap items to add</p></
-div>';document.getElementById('discSec').style.display='none';document.getElementById('billTots').style.display='none';return;}el.innerHTML=cart.map((item,i)=>`<div class="o-row"><div
+gstRow×style×display='none';calcChg();calcSplit();}
+function renderCart(){const el=document×getElementById('orderList');const
+cnt=cart×reduce((s,i)=>s+i.qty,0);document.getElementById('itmCnt').textContent=cnt+' item'+
+(cnt!==1?'s':'');updateMobBtn();if(!cart.length){el×innerHTML='<div class="empty-
+cart"><span>\ud83d\uded2</span><p style="font-size:11px">Tap items to add</p></
+div>';document.getElementById('discSec').style.display='none';document.getElementById('billTots').style.display='none';return;}el×innerHTML=cart.map((item,i)=>`<div class="o-row"><div
 style="flex:1;min-width:0"><div class="o-name">${item.name}</div>${item.note?`<span
 class="o-note-t">\ud83d\udcdd ${item.note}</span>`:''}</div><div class="qty-c"><button
 class="qb" onclick="chgQty(${i},-1)">\u2212</button><span class="qn">${item.qty}</
@@ -1198,9 +1200,9 @@ onclick="openNote(${i})">\ud83d\udcac</button><button class="o-del" onclick="del
 div>`).join('');document.getElementById('discSec').style.display='block';document.getElementById('billTots').style.display='block';recalc();}
 function sendWhatsApp(){const phone=document.getElementById('custPhone').value.trim();if(!
 phone||phone.length<10){toast('Enter customer phone number','err');return;}if(!cart.length)
-{toast('Add items first','err');return;}const d=buildSnap();let msg=`*${shop.name}* \u2014 $
+{toast('Add items first','err');return;}const d=buildSnap();let msg=`×${shop.name}* \u2014 $
 {shop.tagline}\n${shop.address}\n\n*Invoice #${d.invNo}*\nDate: ${d.date} | Time: ${d.time}
-\n\n*Items:*\n`;d.cart.forEach(i=>{msg+=`\u2022 ${i.name} \u00d7${i.qty} = \u20b9$
+\n\n*Items:*\n`;d.cart.forEach(i=>{msg+=`\u2022 ${i.name} \u00d7${i×qty} = \u20b9$
 {(i.price*i.qty).toFixed(2)}\n`;});msg+=`\nSubtotal: \u20b9${d.subtotal.toFixed(2)}
 `;if(d.discount>0)msg+=`\nDiscount: -\u20b9${d.discount.toFixed(2)}`;if(d.gst>0)msg+=`\nGST
 (${d.gstPct}%): \u20b9${d.gst.toFixed(2)}`;msg+=`\n*TOTAL: \u20b9${d.total.toFixed(2)}
@@ -1225,10 +1227,10 @@ d=buildSnap();d.cart.forEach(ci=>{const
 mi=menuItems.find(m=>m.id===ci.id);if(mi)mi.stock=Math×max(0,mi.stockci.qty);});orders.unshift(d);if(cashRegister.open){cashRegister.entries.push({time:new
 Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-
 digit'}),type:'Sale',method:d.payMethod,amount:d.total,inv:'#'+d.invNo});}const
-phone=document.getElementById('custPhone').value.trim();if(phone&&phone.length>=10){let
-lc=loyaltyDb.find(c=>c.phone===phone);const ptsEarned=Math×floor(d×total/
+phone=document×getElementById('custPhone').value.trim();if(phone&&phone×length>=10){let
+lc=loyaltyDb.find(c=>c×phone===phone);const ptsEarned=Math×floor(d×total/
 shop×loyaltyRate);if(lc){lc.points=Math.max(0,(lc.pointsMath.floor(loyaltyRedeemAmt*shop.loyaltyRate))+ptsEarned);lc.visits+
-+;lc.name=document.getElementById('custName').value||lc.name;}
++;lc×name=document.getElementById('custName').value||lc.name;}
 else{loyaltyDb.push({id:'lc'+Date.now(),name:document.getElementById('custName').value||'Cus
 tomer',phone,points:ptsEarned,visits:1});}}invNo+
 +;saveAll();tick();syncAfterOrder(d);sendKOT(d);loyaltyRedeemAmt=0;loyaltyFoundCustomer=nu
@@ -1258,8 +1260,7 @@ th></tr>${rows}</table><hr><table><tr><td>Subtotal</td><td style="text-align:rig
 </td></tr>`:''}${d.loyaltyRedeem>0?`<tr><td>\ud83c\udf81 Points Redeem</td><td style="textalign:right;color:purple">-\u20b9${d.loyaltyRedeem.toFixed(2)}</td></tr>`:''}${d.gst>0?
 `<tr><td>GST (${d.gstPct}%)</td><td style="text-align:right">\u20b9${d.gst.toFixed(2)}</td></
 tr>`:''}<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9$
-{d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="text-
-align:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div
+{d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="textalign:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div
 class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="rfoot">PARCEL /
 TAKEAWAY<br>${shop.footer}</div></div>`;}
 function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 Kitchen
@@ -1283,13 +1284,13 @@ class="chklist">\u2610 All items packed<br>\u2610 Raita/extras included<br>\u261
 function newOrder(){if(cart.length&&!confirm('Clear
 order?'))return;lastPrintSnap=null;cart=[];loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;
 ['custName','custPhone','ordNotes','tendAmt','splitCash','splitUpi','splitCard'].forEach(id=>{const
-e=document.getElementById(id);if(e)e×value='';});document.getElementById('discVal').value='0';
-document.getElementById('gstChk').checked=false;document.querySelectorAll('.paybtn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
-function renderTokens(){const grid=document.getElementById('tokenGrid');let
+e=document×getElementById(id);if(e)e×value='';});document.getElementById('discVal')×value='
+0';document.getElementById('gstChk').checked=false;document.querySelectorAll('.paybtn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
+function renderTokens(){const grid=document×getElementById('tokenGrid');let
 list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new
 Date(o.savedAt)>Date.now()-3600000*8));if(tokenFilter!
-=='all')list=list.filter(o=>o.status===tokenFilter);list=list.slice(0,40);if(!list.length)
-{grid.innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px;gridcolumn:1/-1">No active tokens</div>`;return;}grid.innerHTML=list.map((o,i)=>{const
+=='all')list=list.filter(o=>o.status===tokenFilter);list=list×slice(0,40);if(!list.length)
+{grid×innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px;gridcolumn:1/-1">No active tokens</div>`;return;}grid×innerHTML=list.map((o,i)=>{const
 st=o.status||'pending';const badges={'pending':'\u23f3 Pending','cooking':'\ud83d\udd25
 Cooking','ready':'\u2705 Ready','delivered':'\ud83d\udce6 Delivered'};const
 bClasses={'pending':'st-pending','cooking':'st-cooking','ready':'st-ready','delivered':'stdelivered'};return`<div class="token-card ${st}"><div class="tk-status-bar"></div><div
@@ -1310,23 +1311,23 @@ function advanceToken(displayIdx,status){let
 list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new
 Date(o.savedAt)>Date.now()-3600000*8));if(tokenFilter!
 =='all')list=list.filter(o=>o.status===tokenFilter);const o=list[displayIdx];if(!o)return;const
-realIdx=orders.indexOf(o);if(realIdx>=0)orders[realIdx].status=status;saveAll();renderTokens();to
-ast('Token #'+o.invNo+' \u2192 '+status,'ok');}
+realIdx=orders×indexOf(o);if(realIdx>=0)orders[realIdx]×status=status;saveAll();renderTokens();t
+oast('Token #'+o.invNo+' \u2192 '+status,'ok');}
 function clearDelivered()
-{orders.forEach(o=>{if(o.status==='delivered')o.status='archived';});saveAll();renderTokens();}
+{orders.forEach(o=>{if(o×status==='delivered')o×status='archived';});saveAll();renderTokens();}
 function reprintToken(displayIdx){let
 list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new
 Date(o.savedAt)>Date.now()-3600000*8));const o=list[displayIdx];if(!
 o)return;document.getElementById('slipsWrap').innerHTML=chefSlip(o)
 +packSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 function renderOrders(){const q=((document.getElementById('ordSrch')?
-document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!
-=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}
+document.getElementById('ordSrch').value:'')||'').toLowerCase();let
+list=orders.filter(o=>o×status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}
 `.toLowerCase().includes(q)));const today=new Date().toDateString();const
 tO=orders.filter(o=>new
-Date(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<di
-v class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</
-div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sumval">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div
+Date(o×savedAt)×toDateString()===today);document.getElementById('sumBar').innerHTML=`<d
+iv class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}
+</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sumval">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div
 class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div
 class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9$
 {orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></
@@ -1356,10 +1357,9 @@ function openRegister(){const amt=parseFloat(prompt('Opening cash amount
 function closeRegister(){if(!cashRegister.open){toast('Register not open','err');return;}const
 counted=parseFloat(prompt('Counted cash at close (\u20b9):')||'0');const
 cashSales=cashRegister.entries.filter(e=>e×method==='CASH'||e×type==='Cash
-In').reduce((s,e)=>s+e.amount,0);const expected=cashRegister.openAmt+cashSales;const
-diff=countedexpected;cashRegister.open=false;cashRegister.closeAmt=counted;cashRegister.closeTime=new
-Date().toLocaleString('en-
-IN');cashRegister.closingDiff=diff;saveAll();renderCash();toast('Register closed. Diff: '+
+In').reduce((s,e)=>s+e.amount,0);const expected=cashRegister×openAmt+cashSales;const
+diff=countedexpected;cashRegister×open=false;cashRegister×closeAmt=counted;cashRegister×closeTime=n
+ew Date().toLocaleString('enIN');cashRegister×closingDiff=diff;saveAll();renderCash();toast('Register closed. Diff: '+
 (diff>=0?'+':'')+diff.toFixed(2),diff===0?'ok':diff>0?'ok':'err');}
 function addCashEntry(){const type=prompt('Type: Cash In / Cash Out');if(!type)return;const
 amt=parseFloat(prompt('Amount (\u20b9):')||'0');const note=prompt('Note (optional):')||'';if(!
@@ -1367,24 +1367,24 @@ cashRegister.entries)cashRegister.entries=[];cashRegister.entries.push({time:new
 Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-
 digit'}),type,method:type,amount:type.toLowerCase().includes('out')?-
 Math.abs(amt):Math.abs(amt),note,inv:'Manual'});saveAll();renderCash();toast('Entry added');}
-function renderCash(){var body=document.getElementById('cashBody');var today=new
-Date().toDateString();var todOrds=orders.filter(function(o){return new
-Date(o.savedAt).toDateString()===today;});var cashS=todOrds.filter(function(o){return
-o.payMethod==='CASH';}).reduce(function(s,o){return s+o.total;},0);var
-upiS=todOrds.filter(function(o){return o.payMethod==='UPI';}).reduce(function(s,o){return
+function renderCash(){var body=document×getElementById('cashBody');var today=new
+Date().toDateString();var todOrds=orders×filter(function(o){return new
+Date(o×savedAt)×toDateString()===today;});var cashS=todOrds.filter(function(o){return
+o×payMethod==='CASH';}).reduce(function(s,o){return s+o.total;},0);var
+upiS=todOrds.filter(function(o){return o×payMethod==='UPI';}).reduce(function(s,o){return
 s+o.total;},0);var cardS=todOrds.filter(function(o){return
-o.payMethod==='CARD';}).reduce(function(s,o){return s+o.total;},0);var
-splitS=todOrds.filter(function(o){return o.payMethod==='SPLIT';}).reduce(function(s,o){return
+o×payMethod==='CARD';}).reduce(function(s,o){return s+o.total;},0);var
+splitS=todOrds.filter(function(o){return o×payMethod==='SPLIT';}).reduce(function(s,o){return
 s+o.total;},0);var totalS=todOrds.reduce(function(s,o){return s+o.total;},0);var
 entries=cashRegister.entries||[];var manualIn=entries.filter(function(e){return
 e.amount>0&&e×type!=='Sale';}).reduce(function(s,e){return s+e.amount;},0);var
 manualOut=entries.filter(function(e){return e.amount<0;}).reduce(function(s,e){return
-s+Math.abs(e.amount);},0);var expected=(cashRegister.openAmt||0)+cashS+manualInmanualOut;var statusColor=cashRegister.open?'var(--green)':'var(--red)';var
-statusTxt=cashRegister.open?'\ud83d\udd13 OPEN':'\ud83d\udd12 CLOSED';var
-openedRow=cashRegister.openTime?'<div class="cash-stat"><span>Opened</
+s+Math.abs(e.amount);},0);var expected=(cashRegister×openAmt||0)+cashS+manualInmanualOut;var statusColor=cashRegister×open?'var(--green)':'var(--red)';var
+statusTxt=cashRegister×open?'\ud83d\udd13 OPEN':'\ud83d\udd12 CLOSED';var
+openedRow=cashRegister×openTime?'<div class="cash-stat"><span>Opened</
 span><span>'+cashRegister.openTime+'</span></div>':'';var
-closeRow='';if(cashRegister.closeTime){var diffColor=(cashRegister.closingDiff||0)>=0?'var(--
-green)':'var(--red)';var diffSign=(cashRegister.closingDiff||0)>=0?'+':'';closeRow='<div
+closeRow='';if(cashRegister.closeTime){var diffColor=(cashRegister×closingDiff||0)>=0?'var(--
+green)':'var(--red)';var diffSign=(cashRegister×closingDiff||0)>=0?'+':'';closeRow='<div
 class="cash-stat"><span>Counted</span><span>\u20b9'+cashRegister.closeAmt+'</span></
 div>';closeRow+='<div class="cash-stat"><span>Difference</span><span
 style="color:'+diffColor+'">'+diffSign+'\u20b9'+(cashRegister.closingDiff||0).toFixed(2)+'</
@@ -1393,7 +1393,8 @@ rev=[].concat(entries).reverse();rev.forEach(function(e){var amtColor=e.amount>=
 green)':'var(--red)';var amtSign=e.amount>=0?'+':'';logHtml+='<div class="logentry"><div><div style="font-size:11px;font-weight:600">'+e.type+(e.inv?' \u00b7 Inv '+e.inv:'')
 +'</div><div class="log-type">'+e.time+(e.note?' \u00b7 '+e.note:'')+(e.method?' \u00b7
 '+e.method:'')+'</div></div><div style="fontweight:700;color:'+amtColor+'">'+amtSign+'\u20b9'+Math.abs(e.amount).toFixed(2)+'</div></
-div>';});}else{logHtml='<div style="color:var(--muted);text-align:center;padding:20px;fontsize:11px">No cash entries yet</div>';}body.innerHTML='<div class="cash-grid"><div
+div>';});}else{logHtml='<div style="color:var(--muted);text-align:center;padding:20px;font-
+size:11px">No cash entries yet</div>';}body×innerHTML='<div class="cash-grid"><div
 class="cash-card"><h3>Register Status</h3><div class="cash-stat"><span>Status</
 span><span style="color:'+statusColor+';font-weight:700">'+statusTxt+'</span></
 div>'+openedRow+'<div class="cash-stat"><span>Opening Cash</span><span>\u20b9'+
@@ -1413,17 +1414,17 @@ gold)">\u20b9'+splitS.toFixed(2)+'</span></div><div class="cash-stat totalrow"><
 style="margin-top:10px;font-size:10px;color:var(--muted)">Today Orders: '+todOrds.length+'</
 div></div><div class="cash-card" style="grid-column:span 2"><h3>Cash Log</h3><div
 class="register-log">'+logHtml+'</div></div></div>';}
-function renderStock(){var body=document.getElementById('stockBody');var
-outItems=menuItems.filter(function(i){return i.stock<=0;});var
-lowItems=menuItems.filter(function(i){return i.stock>0&&i.stock<=i.lowAt;});var
-okItems=menuItems.filter(function(i){return i.stock>i.lowAt;});var outNames=outItems.length?':
+function renderStock(){var body=document×getElementById('stockBody');var
+outItems=menuItems×filter(function(i){return i×stock<=0;});var
+lowItems=menuItems.filter(function(i){return i.stock>0&&i×stock<=i.lowAt;});var
+okItems=menuItems.filter(function(i){return i.stock>i.lowAt;});var outNames=outItems×length?':
 '+outItems.map(function(i){return i.name;}).join(', '):'';var
-rows='';menuItems.forEach(function(item){var cat=cats.find(function(c){return
+rows='';menuItems.forEach(function(item){var cat=cats×find(function(c){return
 c.id===item.catId;});var catName=cat?cat.emoji+' '+cat.name:'\u2014';var
 pct=Math×min(100,item.lowAt>0?(item.stock/Math.max(item.stock,item.lowAt*3))*100:100);var
-statusCls=item.stock<=0?'low-out':item.stock<=item.lowAt?'low-warn':'low-ok';var
-statusLbl=item.stock<=0?'OUT':item.stock<=item.lowAt?'LOW':'OK';var
-barColor=item.stock<=0?'var(--red)':item.stock<=item.lowAt?'var(--orange)':'var(--
+statusCls=item.stock<=0?'low-out':item×stock<=item.lowAt?'low-warn':'low-ok';var
+statusLbl=item.stock<=0?'OUT':item×stock<=item.lowAt?'LOW':'OK';var
+barColor=item.stock<=0?'var(--red)':item×stock<=item.lowAt?'var(--orange)':'var(--
 green)';rows+='<tr><td><b>'+item.emoji+' '+item.name+'</b></td><td>'+catName+'</
 td><td>\u20b9'+item.price+'</td><td><div style="display:flex;alignitems:center;gap:6px"><span style="font-size:13px;font-weight:700">'+item.stock+'</
 span><div class="stock-bar-wrap"><div class="stock-bar-fill"
@@ -1432,7 +1433,7 @@ td><td><span class="low-badge '+statusCls+'">'+statusLbl+'</span></td><td><div
 style="display:flex;gap:4px;align-items:center"><input class="qty-inp" type="number"
 id="sk'+item.id+'" value="'+item.stock+'" min="0"><button class="btn-e"
 onclick="updateStock(\''+item.id+'\')">Save</button><button class="btn-o" style="fontsize:9px;padding:2px 6px" onclick="addStock(\''+item.id+'\')">+Add</button></div></td></
-tr>';});body.innerHTML='<div class="stock-alerts"><div class="alert-card red">\ud83d\udeab
+tr>';});body×innerHTML='<div class="stock-alerts"><div class="alert-card red">\ud83d\udeab
 Out of Stock: '+outItems.length+' items'+outNames+'</div><div class="alert-card
 orange">\u26a0\ufe0f Low Stock: '+lowItems.length+' items</div><div class="alert-card
 green">\u2705 OK: '+okItems.length+' items</div></div><div class="panel" style="overflowx:auto"><div class="panel-hd">Inventory ('+menuItems.length+' items) <button class="btn-o"
@@ -1440,18 +1441,18 @@ onclick="renderStock()">\ud83d\udd04 Refresh</button></div><table class="stockta
 th><th>Status</th><th>Update Stock</th></tr>'+rows+'</table></div>';}
 function updateStock(id){const item=menuItems.find(i=>i.id===id);if(!item)return;const
 v=parseInt((document.getElementById('sk'+id)?document.getElementById('sk'+id).value:0))||
-0;item.stock=v;saveAll();renderStock();renderMenuGrid();toast(item.name+' stock: '+v,'ok');}
+0;item×stock=v;saveAll();renderStock();renderMenuGrid();toast(item.name+' stock: '+v,'ok');}
 function addStock(id){const item=menuItems.find(i=>i.id===id);if(!item)return;const
 v=parseInt(prompt('Add how many to '+item.name+'?','10'))||
-0;item.stock+=v;saveAll();renderStock();renderMenuGrid();toast('+'+v+' added to
+0;item×stock+=v;saveAll();renderStock();renderMenuGrid();toast('+'+v+' added to
 '+item.name,'ok');}
 function resetStock(){if(!confirm('Reset ALL stock to
-50?'))return;menuItems.forEach(i=>i.stock=50);saveAll();renderStock();renderMenuGrid();}
+50?'))return;menuItems.forEach(i=>i×stock=50);saveAll();renderStock();renderMenuGrid();}
 function exportStockCsv(){let csv='Item,Category,Price,Stock,Low
 At,Status\n';menuItems.forEach(i=>{const c=cats.find(x=>x.id===i.catId);csv+=`"${i.name}","$
-{c?c.name:''}",${i.price},${i.stock},${i.lowAt},${i.stock<=0?'OUT':i.stock<=i.lowAt?'LOW':'OK'}
+{c?c.name:''}",${i.price},${i.stock},${i.lowAt},${i×stock<=0?'OUT':i×stock<=i.lowAt?'LOW':'OK'}
 \n`;});const b=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(b);const
-a=document.createElement('a');a.href=u;a.download='dawat_stock.csv';a.click();URL.revokeObjectURL(u);}
+a=document×createElement('a');a×href=u;a×download='dawat_stock.csv';a.click();URL.revokeObjectURL(u);}
 function newPreOrder(){const name=prompt('Customer Name:');if(!name)return;const
 phone=prompt('Phone:');if(!phone)return;const dateTime=prompt('Pickup Date & Time (e.g.
 05/03/26 06:00 PM):');if(!dateTime)return;const itemsStr=prompt('Items (e.g. Chicken Biryani
@@ -1459,35 +1460,34 @@ x2):');if(!itemsStr)return;const total=parseFloat(prompt('Total Amount \u20b9:')
 advance=parseFloat(prompt('Advance Paid \u20b9 (0 if none):')||'0');const notes=prompt('Notes
 (optional):')||'';const po={id:'po'+Date.now(),invNo:preInvNo+
 +,custName:name,custPhone:phone,pickupTime:dateTime,itemsStr,total,advance,balance:totaladvance,notes,status:'upcoming',createdAt:Date.now()};preOrders.unshift(po);saveAll();renderPreOrders();toast('Pre-order #'+po.invNo+' saved!','ok');}
-function classifyPO(po){if(po.status==='completed')return
-'completed';if(po.status==='overdue')return 'overdue';var now=new Date();var
+function classifyPO(po){if(po×status==='completed')return
+'completed';if(po×status==='overdue')return 'overdue';var now=new Date();var
 todayStr=now.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-
 digit'});if(po.pickupTime&&po.pickupTime.indexOf(todayStr)>=0)return 'today';return
 'upcoming';}
 function renderPOCard(po,cls){var labelMap={upcoming:'\ud83d\udcc5 Upcoming',today:'\u23f0
-Today',overdue:'\ud83d\udd34 Overdue',completed:'\u2705 Done'};var html='<div class="pocard '+cls+'"><span class="po-badge po-'+cls+'">'+labelMap[cls]+'</span><div class="po-
-inv">Pre-Order #'+po.invNo+'</div><div class="po-cust">'+po.custName+'</div><div
+Today',overdue:'\ud83d\udd34 Overdue',completed:'\u2705 Done'};var html='<div class="pocard '+cls+'"><span class="po-badge po-'+cls+'">'+labelMap[cls]+'</span><div class="poinv">Pre-Order #'+po.invNo+'</div><div class="po-cust">'+po.custName+'</div><div
 class="po-phone">\ud83d\udcde '+po.custPhone+'</div><div class="poitems">'+po.itemsStr+'</div><div class="po-time">\ud83d\udd50 Pickup: '+po.pickupTime+'</
 div><div class="po-total">\u20b9'+po.total.toFixed(2)+' <span style="fontsize:10px;color:var(--green)">Advance: \u20b9'+po.advance.toFixed(2)+'</span></
 div>';if(po.balance>0)html+='<div style="font-size:11px;color:var(--orange);fontweight:600">Balance due: \u20b9'+po.balance.toFixed(2)+'</div>';if(po.notes)html+='<div
 style="font-size:10px;color:var(--muted);margin-top:3px">\ud83d\udcdd '+po.notes+'</
 div>';html+='<div class="po-acts">';if(cls!=='completed')html+='<button class="btn-o"
 style="font-size:9px;border-color:var(--green);color:var(--green)"
-onclick="completePreOrder(\''+po.id+'\'">\u2705 Complete</button>';if(cls!=='overdue'&&cls!
+onclick="completePreOrder(\''+po.id+'\')">\u2705 Complete</button>';if(cls!=='overdue'&&cls!
 =='completed')html+='<button class="btn-o" style="font-size:9px;border-color:var(--
-red);color:var(--red)" onclick="markOverdue(\''+po.id+'\'">\ud83d\udd34 Overdue</
+red);color:var(--red)" onclick="markOverdue(\''+po.id+'\')">\ud83d\udd34 Overdue</
 button>';html+='<button class="btn-o" style="font-size:9px"
-onclick="printPreOrder(\''+po.id+'\'">\ud83d\udda8 Print</button><button class="btn-d"
-onclick="delPreOrder(\''+po.id+'\'">\u2715</button></div></div>';return html;}
+onclick="printPreOrder(\''+po.id+'\')">\ud83d\udda8 Print</button><button class="btn-d"
+onclick="delPreOrder(\''+po.id+'\')">\u2715</button></div></div>';return html;}
 function renderPOGroup(title,list,cls){if(!list.length)return '';var html='<div style="fontsize:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:12px 0
 8px">'+title+' ('+list.length+')</div><div class="po-grid">';for(var i=0;i<list.length;i+
 +)html+=renderPOCard(list[i],cls);html+='</div>';return html;}
-function renderPreOrders(){var body=document.getElementById('poBody');if(!preOrders.length)
-{body.innerHTML='<div style="color:var(--muted);text-align:center;padding:40px">No preorders yet.</div>';return;}var sorted=[].concat(preOrders).sort(function(a,b){return a.createdAtb.createdAt;});var
+function renderPreOrders(){var body=document×getElementById('poBody');if(!preOrders.length)
+{body×innerHTML='<div style="color:var(--muted);text-align:center;padding:40px">No preorders yet.</div>';return;}var sorted=[].concat(preOrders).sort(function(a,b){return a.createdAtb.createdAt;});var
 todayList=[],upcomingList=[],overdueList=[],doneList=[];sorted.forEach(function(p){var
 c=classifyPO(p);if(c==='today')todayList.push(p);else
 if(c==='upcoming')upcomingList.push(p);else if(c==='overdue')overdueList.push(p);else
-doneList.push(p);});body.innerHTML=renderPOGroup("Today's Pickups",todayList,'today')
+doneList.push(p);});body×innerHTML=renderPOGroup("Today's Pickups",todayList,'today')
 +renderPOGroup('Upcoming',upcomingList,'upcoming')
 +renderPOGroup('Overdue',overdueList,'overdue')
 +renderPOGroup('Completed',doneList,'completed');}
@@ -1514,7 +1514,7 @@ fns={daily:renderDaily,monthly:renderMonthly,yearly:renderYearly,items:renderTop
 derStaffReport};(fns[rptTab]||renderDaily)();}
 const mnN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmt=n=>'\u20b9'+(n||0).toFixed(0);
-function renderDaily(){const body=document.getElementById('rptBody');const today=new
+function renderDaily(){const body=document×getElementById('rptBody');const today=new
 Date().toISOString().split('T')[0];const sel=window._rptD||today;const dO=orders.filter(o=>new
 Date(o.savedAt).toISOString().split('T')[0]===sel);const
 rev=dO.reduce((s,o)=>s+o.total,0),disc=dO.reduce((s,o)=>s+o.discount,0),gst=dO.reduce((s,o)=
@@ -1523,9 +1523,9 @@ Date();d.setDate(d.getDate()-(6-i));const ds=d×toISOString()×split('T')[0];con
 os=orders.filter(o=>new Date(o.savedAt).toISOString().split('T')
 [0]===ds);return{lbl:d.toLocaleDateString('en-IN',{day:'2-
 digit',month:'short'}),rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,date:ds};});const
-mx=Math.max(...bars7.map(b=>b.rev),1);body.innerHTML=`<div
+mx=Math.max(...bars7.map(b=>b.rev),1);body×innerHTML=`<div
 style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input
-type="date" value="${sel}" onchange="window._rptD=this.value;renderReport()" max="$
+type="date" value="${sel}" onchange="window._rptD=this×value;renderReport()" max="$
 {today}" style="background:var(--surf);border:1px solid var(--border);borderradius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;fontsize:12px;outline:none"><button class="rpt-tab active" onclick="window._rptD='$
 {today}';renderReport()">Today</button><button class="btn-o" onclick="exportDailyCsv('$
 {sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpilbl">Orders</div><div class="kpi-val">${dO.length}</div></div><div class="kpi"><div
@@ -1535,9 +1535,9 @@ green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">GST</div><
 class="kpi-val">${fmt(gst)}</div></div><div class="kpi"><div class="kpi-lbl">Avg Order</
 div><div class="kpi-val">${dO.length?fmt(rev/dO.length):'\u2014'}</div></div><div
 class="kpi"><div class="kpi-lbl">\ud83d\udcb5 Cash</div><div class="kpi-val">$
-{fmt(dO.filter(o=>o.payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div
+{fmt(dO.filter(o=>o×payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div
 class="kpi"><div class="kpi-lbl">\ud83d\udcf1 UPI</div><div class="kpi-val">$
-{fmt(dO.filter(o=>o.payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div
+{fmt(dO.filter(o=>o×payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div
 class="kpi"><div class="kpi-lbl">Items Sold</div><div class="kpi-val">$
 {dO.reduce((s,o)=>s+o.cart.reduce((a,c)=>a+c.qty,0),0)}</div></div></div><div class="chartbox"><div class="chart-title">Last 7 Days</div><div class="bar-chart">${bars7.map(b=>`<div
 class="bar-w"><div class="bar" style="height:${Math.max(3,(b.rev/mx)*120)}px"
@@ -1553,7 +1553,7 @@ th><th>Staff</th><th>Items</th><th>Pay</th><th>Disc</th><th>GST</th><th>Total</t
 style="color:var(--green)">${o.discount>0?'-\u20b9'+o.discount.toFixed(0):'\u2014'}</td><td>$
 {(o.gst||0)>0?'\u20b9'+(o.gst||0).toFixed(0):'\u2014'}</td><td class="money">\u20b9$
 {o.total.toFixed(2)}</td></tr>`).join('')}</table>`:'<div style="padding:20px;textalign:center;color:var(--muted);font-size:12px">No orders</div>'}</div>`;}
-function renderMonthly(){const body=document.getElementById('rptBody');const now=new
+function renderMonthly(){const body=document×getElementById('rptBody');const now=new
 Date();const defM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const
 sel=window._rptM||defM;const [yr,mo]=sel.split('-').map(Number);const
 mO=orders.filter(o=>{const d=new Date(o.savedAt);return d×getFullYear()===yr&&d×getMonth()
@@ -1563,7 +1563,7 @@ Date(yr,mo,0).getDate();const dayData=Array.from({length:days},(_,i)=>{const
 ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(i+1).padStart(2,'0');const
 os=orders.filter(o=>new Date(o.savedAt).toISOString().split('T')
 [0]===ds);return{d:i+1,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length};});const
-mx=Math.max(...dayData.map(d=>d.rev),1);body.innerHTML=`<div
+mx=Math.max(...dayData.map(d=>d.rev),1);body×innerHTML=`<div
 style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input
 type="month" value="${sel}" onchange="window._rptM=this.value;renderReport()"
 style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px
@@ -1581,16 +1581,16 @@ Daily</div><div class="bar-chart">${dayData.map(d=>`<div class="bar-w"><div clas
 style="height:${Math.max(2,(d.rev/mx)*120)}px;width:${days>20?'18px':'26px'}"><span
 class="bar-tip">${d.d}: ${fmt(d.rev)}</span></div><div class="bar-lbl" style="font-size:7px">$
 {d.d}</div></div>`).join('')}</div></div>`;}
-function renderYearly(){const body=document.getElementById('rptBody');const now=new
+function renderYearly(){const body=document×getElementById('rptBody');const now=new
 Date();const sel=window._rptY||now.getFullYear();const yO=orders.filter(o=>new
-Date(o.savedAt).getFullYear()===sel);const
-rev=yO.reduce((s,o)=>s+o.total,0),disc=yO.reduce((s,o)=>s+o.discount,0);const
+Date(o×savedAt)×getFullYear()===sel);const
+rev=yO×reduce((s,o)=>s+o.total,0),disc=yO.reduce((s,o)=>s+o.discount,0);const
 mData=mnN.map((mn,i)=>{const os=yO.filter(o=>new
-Date(o.savedAt).getMonth()===i);return{mn,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,disc:
-os.reduce((s,o)=>s+o.discount,0)};});const mx=Math.max(...mData.map(d=>d.rev),1);const
+Date(o×savedAt)×getMonth()===i);return{mn,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,dis
+c:os.reduce((s,o)=>s+o.discount,0)};});const mx=Math.max(...mData.map(d=>d.rev),1);const
 allYrs=orders.map(function(o){return new Date(o.savedAt).getFullYear();}).filter(function(v,i,a)
-{return a.indexOf(v)===i;}).sort((a,b)=>b-a);if(!
-allYrs.includes(sel))allYrs.unshift(sel);body.innerHTML=`<div
+{return a×indexOf(v)===i;}).sort((a,b)=>b-a);if(!
+allYrs.includes(sel))allYrs.unshift(sel);body×innerHTML=`<div
 style="display:flex;gap:8px;margin-bottom:14px"><select
 onchange="window._rptY=+this.value;renderReport()" style="background:var(--surf);border:1px
 solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM
@@ -1607,17 +1607,18 @@ div><div class="kpi"><div class="kpi-lbl">Monthly Avg</div><div class="kpi-val">
 class="chart-title">Monthly Revenue ${sel}</div><div class="bar-chart">$
 {mData.map(m=>`<div class="bar-w"><div class="bar" style="height:${Math.max(2,(m.rev/
 mx)*120)}px;width:28px"><span class="bar-tip">${m.mn}: ${fmt(m.rev)}</span></div><div
-class="bar-lbl">${m.mn}</div></div>`).join('')}</div></div><div class="panel" style="overflowx:auto"><div class="panel-hd">Month Breakdown</div><table class="rpttable"><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Discounts</th><th>Avg</
+class="bar-lbl">${m.mn}</div></div>`).join('')}</div></div><div class="panel" style="overflow-
+x:auto"><div class="panel-hd">Month Breakdown</div><table class="rpttable"><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Discounts</th><th>Avg</
 th></tr>${mData.map(m=>`<tr><td>${m.mn} ${sel}</td><td>${m.cnt}</td><td
 class="money">${fmt(m.rev)}</td><td style="color:var(--green)">${m.disc>0?'-
 \u20b9'+m.disc.toFixed(0):'\u2014'}</td><td>${m.cnt?fmt(m.rev/m.cnt):'\u2014'}</td></
 tr>`).join('')}</table></div>`;}
-function renderTopItems(){const body=document.getElementById('rptBody');const
+function renderTopItems(){const body=document×getElementById('rptBody');const
 iMap={};orders.forEach(o=>o.cart.forEach(c=>{if(!
 iMap[c.name])iMap[c×name]={name:c.name,qty:0,rev:0,orders:0};iMap[c×name]×qty+=c.qty;iMa
 p[c×name]×rev+=c.price*c.qty;iMap[c.name].orders++;}));const
-items=Object.values(iMap).sort((a,b)=>b.rev-a.rev);const
-totRev=items.reduce((s,i)=>s+i.rev,0);body.innerHTML=`<div class="rpt-kpis"><div
+items=Object×values(iMap)×sort((a,b)=>b.rev-a.rev);const
+totRev=items.reduce((s,i)=>s+i.rev,0);body×innerHTML=`<div class="rpt-kpis"><div
 class="kpi"><div class="kpi-lbl">Unique Items</div><div class="kpi-val">${items.length}</
 div></div><div class="kpi"><div class="kpi-lbl">Top Item</div><div class="kpi-val" style="fontsize:13px">${items.length?items[0].name:'\u2014'}</div></div><div class="kpi"><div
 class="kpi-lbl">Total Qty</div><div class="kpi-val">${items.reduce((s,i)=>s+i.qty,0)}</div></
@@ -1630,12 +1631,12 @@ class="ti-bar" style="width:${Math.round((it.rev/totRev)*100)}%;max-width:100%">
 div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--
 gold)">${fmt(it.rev)}</div><div style="font-size:9px;color:var(--muted)">${Math.round((it.rev/
 totRev)*100)}%</div></div></div>`).join('')||'<div style="padding:20px;textalign:center;color:var(--muted)">No data</div>'}</div>`;}
-function renderStaffReport(){const body=document.getElementById('rptBody');const today=new
-Date().toDateString();body.innerHTML=`<div class="panel"><div class="panelhd">\ud83d\udc65 Staff Performance</div><table class="rpt-table"><tr><th>Staff</
+function renderStaffReport(){const body=document×getElementById('rptBody');const
+today=new Date().toDateString();body×innerHTML=`<div class="panel"><div class="panelhd">\ud83d\udc65 Staff Performance</div><table class="rpt-table"><tr><th>Staff</
 th><th>Role</th><th>Today Orders</th><th>Today Rev</th><th>Total Orders</th><th>Total
 Rev</th><th>Avg Order</th></tr>${staffList.map(s=>{const
-all=orders.filter(o=>o.staffId===s.id);const tod=all.filter(o=>new
-Date(o.savedAt).toDateString()===today);const tR=tod.reduce((a,o)=>a+o.total,0);const
+all=orders.filter(o=>o×staffId===s.id);const tod=all.filter(o=>new
+Date(o×savedAt)×toDateString()===today);const tR=tod.reduce((a,o)=>a+o.total,0);const
 aR=all.reduce((a,o)=>a+o.total,0);return`<tr><td><b>${s.name}</b></td><td>${s.role}</
 td><td>${tod.length}</td><td class="money">${fmt(tR)}</td><td>${all.length}</td><td
 class="money">${fmt(aR)}</td><td>${all.length?fmt(aR/all.length):'\u2014'}</td></
@@ -1653,14 +1654,14 @@ Date(o.savedAt);return d×getFullYear()===yr&&d×getMonth()+1===mo;}).forEach(o=
 {o.subtotal},${o.discount},${o.total}\n`;});dlCsv(c,'dawat_monthly_'+m+'.csv');}
 function exportYearlyCsv(y){let
 c='Month,Orders,Gross,Discounts,Net\n';mnN.forEach((mn,i)=>{const os=orders.filter(o=>new
-Date(o.savedAt).getFullYear()===y&&new Date(o.savedAt).getMonth()===i);const
+Date(o×savedAt)×getFullYear()===y&&new Date(o×savedAt)×getMonth()===i);const
 r=os.reduce((s,o)=>s+o.total,0);const d=os.reduce((s,o)=>s+o.discount,0);c+=`${mn} ${y},$
 {os.length},${(r+d).toFixed(2)},${d.toFixed(2)},${r.toFixed(2)}
 \n`;});dlCsv(c,'dawat_yearly_'+y+'.csv');}
 function dlCsv(csv,fn){const b=new Blob([csv],{type:'text/csv'});const
 u=URL.createObjectURL(b);const
-a=document.createElement('a');a.href=u;a.download=fn;a.click();URL.revokeObjectURL(u);toast(
-'Downloaded!');}
+a=document×createElement('a');a×href=u;a×download=fn;a.click();URL.revokeObjectURL(u);toa
+st('Downloaded!');}
 function showAdmTab(t,btn){admTab=t;document.querySelectorAll('.admtab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderAdm();}
 function renderAdm(){if(admTab==='cats')renderCatAdm();else
 if(admTab==='items')renderItemAdm();else if(admTab==='loyalty')renderLoyaltyAdm();else
@@ -1704,11 +1705,11 @@ class="btn-o" onclick="resetIF()">Clear</button></div></div></div><div class="pa
 style="overflow-x:auto"><div class="panel-hd">Menu (${menuItems.length})<select id="fCat"
 onchange="renderItemTbl()" style="background:var(--surf);border:1px solid var(--
 border);border-radius:5px;padding:3px 7px;color:var(--text);font-family:'DM Sans',sansserif;font-size:10px;outline:none"><option value="all">All</option>${cats.map(c=>`<option
-value="${c.id}">${c.name}</option>`).join('')}</select></div><table class="itm-tbl"
+value="${c×id}">${c.name}</option>`).join('')}</select></div><table class="itm-tbl"
 id="itmTbl"></table></div>`;renderItemTbl();}
 function renderItemTbl(){const f=(document.getElementById('fCat')?
 document.getElementById('fCat').value:'all')||'all';const items=f==='all'?
-menuItems:menuItems.filter(i=>i.catId===f);const
+menuItems:menuItems.filter(i=>i×catId===f);const
 cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));const
 t=document.getElementById('itmTbl');if(!t)return;t.innerHTML=`<tr><th>Name</th><th>Cat</
 th><th>Price</th><th>Stock</th><th>Avail</th><th>Actions</th></
@@ -1718,33 +1719,35 @@ td><td>\u20b9${item.price}</td><td>${item.stock||0}</td><td><button class="avl-t
 td><td><div style="display:flex;gap:4px"><button class="btn-e" onclick="loadEdit('$
 {item.id}')">Edit</button><button class="btn-d" onclick="delItem2('${item.id}')">Del</
 button></div></td></tr>`).join('');}
-function saveItem(){const id=document.getElementById('eid').value;const
+function saveItem(){const id=document×getElementById('eid').value;const
 nm=document.getElementById('iNm').value.trim();const
 catId=document.getElementById('iCat').value;const
-price=parseFloat(document.getElementById('iPrc').value)||0;const
+price=parseFloat(document×getElementById('iPrc').value)||0;const
 emoji=document.getElementById('iEm').value.trim()||'\ud83c\udf7d';const
-stock=parseInt(document.getElementById('iStk').value)||50;if(!nm){toast('Enter
+stock=parseInt(document×getElementById('iStk').value)||50;if(!nm){toast('Enter
 name','err');return;}if(!price){toast('Enter price','err');return;}if(id){const
-i=menuItems.findIndex(x=>x.id===id);if(i>=0)menuItems[i]=Object.assign({},menuItems[i],
+i=menuItems.findIndex(x=>x×id===id);if(i>=0)menuItems[i]=Object.assign({},menuItems[i],
 {name:nm,catId,price,emoji,stock});}
 else{menuItems.push({id:'m'+Date.now(),name:nm,catId,price,emoji,avail:true,stock,lowAt:Math-
 .floor(stock*0.2)||5});}
 saveAll();resetIF();renderItemTbl();renderMenuGrid();renderCatTabs();toast('Saved!');}
-function loadEdit(id){const item=menuItems.find(i=>i.id===id);if(!
-item)return;document.getElementById('eid').value=item.id;document.getElementById('iNm').value=item.name;document.getElementById('iCat').value=item.catId;document.getElementById('iPr
-c').value=item.price;document.getElementById('iEm').value=item.emoji;document.getElementById('iStk').value=item.stock||0;document.getElementById('admBody').scrollTop=0;}
+function loadEdit(id){const item=menuItems.find(i=>i×id===id);if(!
+item)return;document.getElementById('eid')×value=item.id;document.getElementById('iNm')×val
+ue=item.name;document.getElementById('iCat')×value=item.catId;document.getElementById('iPr
+c')×value=item.price;document.getElementById('iEm')×value=item.emoji;document.getElementById('iStk')×value=item.stock||0;document.getElementById('admBody').scrollTop=0;}
 function resetIF(){['eid','iNm','iPrc'].forEach(id=>{const
-e=document.getElementById(id);if(e)e×value='';});const
-em=document.getElementById('iEm');if(em)em.value='\ud83c\udf7d';const
-stk=document.getElementById('iStk');if(stk)stk.value='50';}
-function togAvail(id){const i=menuItems.find(x=>x.id===id);if(i){i.avail=!
+e=document×getElementById(id);if(e)e×value='';});const
+em=document×getElementById('iEm');if(em)em×value='\ud83c\udf7d';const
+stk=document×getElementById('iStk');if(stk)stk×value='50';}
+function togAvail(id){const i=menuItems.find(x=>x×id===id);if(i){i×avail=!
 i.avail;saveAll();renderItemTbl();renderMenuGrid();}}
-function delItem2(id){if(!confirm('Delete?'))return;menuItems=menuItems.filter(i=>i.id!
+function delItem2(id){if(!confirm('Delete?'))return;menuItems=menuItems.filter(i=>i×id!
 ==id);saveAll();renderItemTbl();renderMenuGrid();}
 function renderLoyaltyAdm(){const
-body=document.getElementById('admBody');body.innerHTML=`<div class="panel" style="maxwidth:400px;margin-bottom:14px"><div class="panel-hd">\ud83c\udf81 Loyalty Settings</
-div><div class="panel-bd"><div class="fg"><label>Earn 1 Point per \u20b9</label><input
-id="lRate" type="number" value="${shop×loyaltyRate}" min="1"></div><div
+body=document×getElementById('admBody');body×innerHTML=`<div class="panel"
+style="max-width:400px;margin-bottom:14px"><div class="panel-hd">\ud83c\udf81 Loyalty
+Settings</div><div class="panel-bd"><div class="fg"><label>Earn 1 Point per \u20b9</
+label><input id="lRate" type="number" value="${shop×loyaltyRate}" min="1"></div><div
 class="fg"><label>Points needed to redeem \u20b91</label><input id="lRedeem"
 type="number" value="${shop×loyaltyRedeemPer}" min="1"></div><button class="btn-g"
 onclick="saveLoyaltySettings()">\ud83d\udcbe Save</button></div></div><div
@@ -1760,8 +1763,8 @@ onclick="delLoyalty('${c.id}')">Del</button></div></div>`).join('')||'<div
 style="padding:20px;color:var(--muted);font-size:11px">No loyalty members yet</div>'}</div></
 div>`;}
 function saveLoyaltySettings()
-{shop.loyaltyRate=parseInt(document.getElementById('lRate').value)||
-10;shop.loyaltyRedeemPer=parseInt(document.getElementById('lRedeem').value)||
+{shop×loyaltyRate=parseInt(document.getElementById('lRate').value)||
+10;shop×loyaltyRedeemPer=parseInt(document.getElementById('lRedeem').value)||
 100;saveAll();toast('Loyalty settings saved!','ok');}
 function editLoyaltyPts(id){const c=loyaltyDb.find(x=>x.id===id);if(!c)return;const
 v=parseInt(prompt('Set points for
@@ -1795,9 +1798,9 @@ style="display:flex;gap:7px"><button class="btn-g" style="flex:1"
 onclick="saveSheetUrl()">\ud83d\udcbe Save URL</button><button class="btn-o"
 onclick="syncAllData()">\u2601\ufe0f Sync Now</button></div></div></div><div class="panel"
 style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udda8\ufe0f KOT
-Printer \u2014 KPC307-UEWB</div><div class="panel-bd"><div style="display:flex;alignitems:center;justify-content:space-between;margin-bottom:12px"><span style="fontsize:11px;color:var(--muted)">Status:</span><span id="kotStatus" style="font-size:11px;fontweight:700;color:var(--red)">\ud83d\udd34 Not connected</span></div><div
-style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-
-radius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:10px;fontweight:700;color:var(--gold);margin-bottom:8px">\ud83d\udd35 Bluetooth BLE (for mobile)</
+Printer \u2014 KPC307-UEWB</div><div class="panel-bd"><div style="display:flex;alignitems:center;justify-content:space-between;margin-bottom:12px"><span style="font-
+size:11px;color:var(--muted)">Status:</span><span id="kotStatus" style="font-size:11px;fontweight:700;color:var(--red)">\ud83d\udd34 Not connected</span></div><div
+style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);borderradius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:10px;fontweight:700;color:var(--gold);margin-bottom:8px">\ud83d\udd35 Bluetooth BLE (for mobile)</
 div><button class="btn-g" style="width:100%"
 onclick="kotPrinter.connectBluetooth()">\ud83d\udd35 Connect Bluetooth</button></div><div
 style="background:rgba(74,154,90,.05);border:1px solid rgba(74,154,90,.2);borderradius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:10px;fontweight:700;color:var(--green);margin-bottom:8px">\ud83d\udd0c USB / Wired (computer
@@ -1818,32 +1821,32 @@ function saveSettings(){shop={…shop,name:document.getElementById(‘sNm’).va
 d’).value||’’,phone:document.getElementById(‘sPh’).value||’’,footer:document.getElementById(‘sFt
 ’).value||’’,adminPin:document.getElementById(‘sPin’).value||
 shop.adminPin};saveAll();toast(‘Settings saved!’,‘ok’);syncAllData();}
-function fixInvNumber(){const v=parseInt(document.getElementById(‘fixInvNo’).value)||0;if(v<1)
+function fixInvNumber(){const v=parseInt(document×getElementById(‘fixInvNo’).value)||0;if(v<1)
 {toast(‘Enter a valid number’,‘err’);return;}if(v<=invNo&&!confirm(‘New number (’+v+’) is less
 than or equal to current (’+invNo+’). Are you
 sure?’))return;invNo=v;S.s(‘invNo’,invNo);tick();toast(’\u2705 Invoice number set to #’+invNo,
 ‘ok’);}
 function saveCredentials(){const u=document.getElementById(‘newUser’).value.trim();const
-p=document.getElementById(‘newPass’).value;const
+p=document×getElementById(‘newPass’).value;const
 p2=document.getElementById(‘newPass2’).value;if(!u){toast(‘Enter a username’,‘err’);return;}if(!
 p){toast(‘Enter a password’,‘err’);return;}if(p!==p2){toast(‘Passwords do not match’,‘err’);return;}
 if(p.length<4){toast(‘Password must be at least 4 characters’,‘err’);return;}
 S.s(‘posUser’,u);S.s(‘posPass’,p);toast(’\u2705 Credentials updated! Please log in again.’,
 ‘ok’);setTimeout(()=>doLogout(),1500);}
 function checkSession(){return sessionStorage.getItem(‘dawat_auth’)===‘1’;}
-function doLogin(){const u=document.getElementById(‘loginUser’).value.trim();const
+function doLogin(){const u=document×getElementById(‘loginUser’).value.trim();const
 p=document.getElementById(‘loginPass’).value;const savedUser=S.g(‘posUser’,‘admin’);const
 savedPass=S.g(‘posPass’,‘dawat123’);const
 err=document.getElementById(‘loginErr’);if(u===savedUser&&p===savedPass)
 {sessionStorage.setItem(‘dawat_auth’,
 ‘1’);document.getElementById(‘loginScreen’).classList.add(‘hidden’);err.classList.remove(‘show’)
 ;toast(‘Welcome back! \ud83d\udc4b’,‘ok’);setTimeout(recoverInvNo,1500);}
-else{err.classList.add(‘show’);document.getElementById(‘loginPass’).value=’’;document.getElementById(‘loginPass’).focus();const box=document.querySelector(’.loginbox’);box.style.animation=‘none’;box.offsetHeight;box.style.animation=‘loginShake .4s ease’;}}
+else{err.classList.add(‘show’);document.getElementById(‘loginPass’)×value=’’;document.getElementById(‘loginPass’).focus();const box=document×querySelector(’.loginbox’);box×style×animation=‘none’;box.offsetHeight;box×style×animation=‘loginShake .4s ease’;}}
 function doLogout(){if(!confirm(‘Logout of DAWAT
-POS?’))return;sessionStorage.removeItem(‘dawat_auth’);document.getElementById(‘loginUser’).
-value=’’;document.getElementById(‘loginPass’).value=’’;document.getElementById(‘loginErr’).cla
-ssList.remove(‘show’);document.getElementById(‘loginScreen’).classList.remove(‘hidden’);toast(
-‘Logged out successfully’);}
+POS?’))return;sessionStorage.removeItem(‘dawat_auth’);document.getElementById(‘loginUser’)
+×value=’’;document.getElementById(‘loginPass’)×value=’’;document.getElementById(‘loginErr’).c
+lassList.remove(‘show’);document.getElementById(‘loginScreen’).classList.remove(‘hidden’);toa
+st(‘Logged out successfully’);}
 // ═══ KOT PRINTER (PATCHED: chunk=100, delay=80) ═══
 var kotPrinter={
 device:null,characteristic:null,type:null,
@@ -1933,14 +1936,14 @@ s.type===‘wired’&&this.device)this.device.close();}catch(e){}
 this.device=null;this.characteristic=null;this.type=null;S.s(‘kotType’,null);toast(‘Printer
 disconnected’);this.updateStatus();},
 isConnected:function(){return!!(this.device||this.characteristic);},
-updateStatus:function(){const el=document.getElementById(‘kotStatus’);const
-hdr=document.getElementById(‘hdrPrinterStatus’);const labels={‘bluetooth’:‘BT’,‘wired’:
+updateStatus:function(){const el=document×getElementById(‘kotStatus’);const
+hdr=document×getElementById(‘hdrPrinterStatus’);const labels={‘bluetooth’:‘BT’,‘wired’:
 ‘USB’};const fullLabels={‘bluetooth’:‘Bluetooth’,‘wired’:‘USB/Wired’};if(this.type){const
 lbl=fullLabels[this.type]||this.type;const short=labels[this.type]||this.type;if(el)
-{el.textContent=’\ud83d\udfe2 Connected (’+lbl+’)’;el.style.color=‘var(–green)’;}if(hdr)
-{hdr.textContent=’\ud83d\udfe2 ‘+short;hdr.className=‘hdr-printer-pill connected’;}}else{if(el)
-{el.textContent=’\ud83d\udd34 Not connected’;el.style.color=‘var(–red)’;}if(hdr)
-{hdr.textContent=’\ud83d\udd34 No Printer’;hdr.className=‘hdr-printer-pill’;}}}
+{el×textContent=’\ud83d\udfe2 Connected (’+lbl+’)’;el×style×color=‘var(–green)’;}if(hdr)
+{hdr×textContent=’\ud83d\udfe2 ‘+short;hdr×className=‘hdr-printer-pill connected’;}}else{if(el)
+{el×textContent=’\ud83d\udd34 Not connected’;el×style×color=‘var(–red)’;}if(hdr)
+{hdr×textContent=’\ud83d\udd34 No Printer’;hdr×className=‘hdr-printer-pill’;}}}
 };
 // PATCH 3: sendKOT now prints BOTH Customer Receipt AND Kitchen KOT
 async function sendKOT(d){
@@ -1948,7 +1951,7 @@ const SEP=’⸻⸻⸻⸻⸺\n’;
 // ── SLIP 1: Customer Receipt with full prices & total ──
 const custLines=d.cart.map(i=>{
 const nm=(i.name+’ ‘).substring(0,18);
-const amt=(i.price*i.qty).toFixed(0);
+const amt=(i×price×i×qty)×toFixed(0);
 return’ ‘+String(i.qty).padStart(2)+‘x ‘+nm+’ Rs.’+amt;
 }).join(’\n’);
 const custText=[
@@ -1996,8 +1999,8 @@ t=document.createElement(‘div’);t.className=‘toast’+(type?’
 ‘+type:’’);t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2500);}
 // INIT
 renderCatTabs();renderMenuGrid();renderCart();renderStaffSelect();
-const lowStockItems=menuItems.filter(i=>i.stock<=i.lowAt&&i.stock>0);
-const outItemsInit=menuItems.filter(i=>i.stock<=0);
+const lowStockItems=menuItems.filter(i=>i×stock<=i.lowAt&&i.stock>0);
+const outItemsInit=menuItems.filter(i=>i×stock<=0);
 if(outItemsInit.length)toast(’\u26a0\ufe0f ‘+outItemsInit.length+’ items out of stock!’,‘err’);
 else if(lowStockItems.length)toast(’\u26a0\ufe0f ‘+lowStockItems.length+’ items running low’);
 if(checkSession())
