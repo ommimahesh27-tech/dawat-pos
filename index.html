@@ -943,100 +943,182 @@ function checkSession(){return sessionStorage.getItem('dawat_auth')==='1';}
 function doLogin(){const u=document.getElementById('loginUser').value.trim();const p=document.getElementById('loginPass').value;const savedUser=S.g('posUser','admin');const savedPass=S.g('posPass','dawat123');const err=document.getElementById('loginErr');if(u===savedUser&&p===savedPass){sessionStorage.setItem('dawat_auth','1');document.getElementById('loginScreen').classList.add('hidden');err.classList.remove('show');toast('Welcome back! \ud83d\udc4b','ok');setTimeout(recoverInvNo,1500);}else{err.classList.add('show');document.getElementById('loginPass').value='';document.getElementById('loginPass').focus();const box=document.querySelector('.login-box');box.style.animation='none';box.offsetHeight;box.style.animation='loginShake .4s ease';}}
 function doLogout(){if(!confirm('Logout of DAWAT POS?'))return;sessionStorage.removeItem('dawat_auth');document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';document.getElementById('loginErr').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden');toast('Logged out successfully');}
 
-// ═══ KOT PRINTER (PATCHED: chunk=100, delay=80) ═══
+// ═══ KOT PRINTER — KPC307-UEWB (BLE + WebUSB + Serial) ═══
 var kotPrinter={
   device:null,characteristic:null,type:null,
+
+  // ── Bluetooth BLE connect ──
   connectBluetooth:async function(){
     try{
       if(!navigator.bluetooth){toast('\u274c Bluetooth not supported. Use Chrome on Android/Windows.','err');return false;}
-      toast('\ud83d\udd35 Searching for KOT printer\u2026');
-      const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','00001101-0000-1000-8000-00805f9b34fb','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb']});
+      toast('\ud83d\udd35 Opening Bluetooth picker \u2014 click your printer name then Connect\u2026');
+      const device=await navigator.bluetooth.requestDevice({
+        acceptAllDevices:true,
+        optionalServices:[
+          '000018f0-0000-1000-8000-00805f9b34fb',
+          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+          '00001101-0000-1000-8000-00805f9b34fb',
+          '0000ff00-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb',
+          '00001800-0000-1000-8000-00805f9b34fb',
+          '00001801-0000-1000-8000-00805f9b34fb',
+        ]
+      });
+      toast('\ud83d\udd35 Connecting to '+device.name+'\u2026');
       const server=await device.gatt.connect();
+      toast('\ud83d\udd35 Connected! Finding print service\u2026');
       let characteristic=null;
-      const serviceUUIDs=['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb'];
-      for(const uuid of serviceUUIDs){try{const svc=await server.getPrimaryService(uuid);const chars=await svc.getCharacteristics();characteristic=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);if(characteristic){console.log('KOT: found service',uuid);break;}}catch(e){}}
-      if(!characteristic){try{const services=await server.getPrimaryServices();for(const svc of services){const chars=await svc.getCharacteristics();characteristic=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);if(characteristic)break;}}catch(e){}}
-      if(!characteristic){toast('\u274c Printer connected but no write channel found.','err');return false;}
-      this.device=device;this.characteristic=characteristic;this.type='bluetooth';S.s('kotType','bluetooth');
-      toast('\u2705 BT Connected: '+(device.name||'KOT Printer'),'ok');
-      device.addEventListener('gattserverdisconnected',()=>{this.device=null;this.characteristic=null;toast('\ud83d\udd35 Printer disconnected','err');this.updateStatus();});
-      this.updateStatus();return true;
-    }catch(e){if(e.name!=='NotFoundError')toast('\u274c Bluetooth: '+e.message,'err');return false;}
+      // Try known service UUIDs
+      const serviceUUIDs=[
+        '000018f0-0000-1000-8000-00805f9b34fb',
+        'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+        '0000ff00-0000-1000-8000-00805f9b34fb',
+        '0000ffe0-0000-1000-8000-00805f9b34fb',
+      ];
+      for(const uuid of serviceUUIDs){
+        try{
+          const svc=await server.getPrimaryService(uuid);
+          const chars=await svc.getCharacteristics();
+          characteristic=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);
+          if(characteristic){console.log('KOT: BLE service found:',uuid);break;}
+        }catch(e){}
+      }
+      // Last resort: enumerate all services
+      if(!characteristic){
+        try{
+          const services=await server.getPrimaryServices();
+          for(const svc of services){
+            try{
+              const chars=await svc.getCharacteristics();
+              characteristic=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);
+              if(characteristic){console.log('KOT: found via enum, svc=',svc.uuid);break;}
+            }catch(e){}
+          }
+        }catch(e){console.log('enum error:',e);}
+      }
+      if(!characteristic){
+        toast('\u274c Printer paired but print channel not found. Try USB instead.','err');
+        try{server.disconnect();}catch(e){}
+        return false;
+      }
+      this.device=device;this.characteristic=characteristic;this.type='bluetooth';
+      S.s('kotType','bluetooth');
+      toast('\u2705 BT Connected: '+device.name,'ok');
+      device.addEventListener('gattserverdisconnected',()=>{
+        this.device=null;this.characteristic=null;this.type=null;
+        toast('\ud83d\udd35 Printer disconnected','err');
+        this.updateStatus();
+      });
+      this.updateStatus();
+      return true;
+    }catch(e){
+      if(e.name==='NotFoundError')toast('\u26a0\ufe0f No device selected. Click device name then Connect.','err');
+      else toast('\u274c BT Error: '+e.message,'err');
+      return false;
+    }
   },
+
+  // ── USB connect — WebUSB (no driver needed) then fallback to Serial ──
   connectWired:async function(){
-    // Try WebUSB first (no driver needed - works with KPC307-UEWB directly)
+    // 1. Try WebUSB first (no Windows driver required)
     if(navigator.usb){
       try{
-        toast('\ud83d\udd0c Select your KPC307-UEWB printer\u2026');
+        toast('\ud83d\udd0c Opening USB picker \u2014 select KPC307-UEWB\u2026');
         const device=await navigator.usb.requestDevice({filters:[]});
         await device.open();
-        if(device.configuration===null)await device.selectConfiguration(1);
-        // Try to claim interface 0 (printer interface)
-        let claimed=false;
-        for(let ifNum=0;ifNum<device.configuration.interfaces.length;ifNum++){
-          try{await device.claimInterface(ifNum);claimed=true;break;}catch(e){}
+        if(device.configuration===null){
+          await device.selectConfiguration(1);
         }
-        if(!claimed){await device.close();throw new Error('Could not claim USB interface');}
+        // Claim first available interface
+        let claimed=false;
+        for(let n=0;n<(device.configuration.interfaces.length||1);n++){
+          try{await device.claimInterface(n);claimed=true;console.log('KOT USB: claimed interface',n);break;}
+          catch(e){console.log('KOT USB: interface',n,'failed:',e.message);}
+        }
+        if(!claimed){
+          await device.close();
+          throw new Error('Cannot claim USB interface');
+        }
         this.device=device;this.type='usb';S.s('kotType','usb');
         toast('\u2705 USB Connected: '+(device.productName||'KOT Printer'),'ok');
-        this.updateStatus();return true;
+        this.updateStatus();
+        return true;
       }catch(e){
         if(e.name==='NotFoundError'){return false;}
-        // Fall through to Web Serial if WebUSB fails
-        console.log('WebUSB failed, trying Web Serial:',e.message);
+        console.log('WebUSB failed:',e.message,'\u2014 trying Web Serial...');
+        toast('\u26a0\ufe0f WebUSB: '+e.message+'. Trying Serial...','err');
       }
     }
-    // Fallback: Web Serial (requires COM port driver)
+    // 2. Web Serial fallback (needs COM port / VCP driver)
     if(navigator.serial){
       try{
         toast('\ud83d\udd0c Select printer COM port\u2026');
         const port=await navigator.serial.requestPort();
-        await port.open({baudRate:115200});
+        await port.open({baudRate:9600});
         this.device=port;this.type='wired';S.s('kotType','wired');
         toast('\u2705 Serial port connected!','ok');this.updateStatus();return true;
-      }catch(e){if(e.name!=='NotFoundError')toast('\u274c USB error: '+e.message,'err');return false;}
+      }catch(e){
+        if(e.name!=='NotFoundError')toast('\u274c Serial error: '+e.message,'err');
+        return false;
+      }
     }
-    toast('\u274c No USB/Serial support in this browser. Use Chrome.','err');
+    toast('\u274c No USB API available. Use Chrome browser.','err');
     return false;
   },
+
+  // ── Send ESC/POS data ──
   print:async function(text){
-    if(!this.device&&!this.characteristic){toast('\u26a0\ufe0f No printer connected. Go Admin > KOT Printer to connect.','err');return false;}
+    if(!this.device&&!this.characteristic){
+      toast('\u26a0\ufe0f No printer connected. Go Admin \u2192 KOT Printer to connect.','err');
+      return false;
+    }
     try{
       const bytes=this.textToBytes(text);
+      // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        // PATCH 1: chunkSize reduced from 512 to 100 to fix buffer overflow cutoff
         const chunkSize=100;
-        const useWriteNoResp=this.characteristic.properties.writeWithoutResponse;
+        const useNoResp=this.characteristic.properties.writeWithoutResponse;
         for(let i=0;i<bytes.length;i+=chunkSize){
           const chunk=bytes.slice(i,i+chunkSize);
-          if(useWriteNoResp){await this.characteristic.writeValueWithoutResponse(chunk);}
-          else{await this.characteristic.writeValue(chunk);}
-          // PATCH 2: delay increased from 30ms to 80ms to prevent buffer overflow
+          if(useNoResp)await this.characteristic.writeValueWithoutResponse(chunk);
+          else await this.characteristic.writeValue(chunk);
           if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,80));
         }
-      }else if(this.type==='usb'&&this.device){
-        // WebUSB — find bulk OUT endpoint and send
-        let epNum=1; // default
+      }
+      // WebUSB
+      else if(this.type==='usb'&&this.device){
+        let epNum=1;
         try{
           const iface=this.device.configuration.interfaces[0];
           const ep=iface.alternate.endpoints.find(function(e){return e.direction==='out'&&e.type==='bulk';});
           if(ep)epNum=ep.endpointNumber;
         }catch(e){}
-        // Send in chunks to avoid USB buffer overflow
         const usbChunk=512;
         for(let i=0;i<bytes.length;i+=usbChunk){
           await this.device.transferOut(epNum,bytes.slice(i,i+usbChunk));
           if(i+usbChunk<bytes.length)await new Promise(r=>setTimeout(r,20));
         }
-      }else if(this.type==='wired'&&this.device){
-        const writer=this.device.writable.getWriter();await writer.write(bytes);writer.releaseLock();
+      }
+      // Web Serial
+      else if(this.type==='wired'&&this.device){
+        const writer=this.device.writable.getWriter();
+        await writer.write(bytes);
+        writer.releaseLock();
       }
       return true;
-    }catch(e){toast('\u274c Print error: '+e.message,'err');return false;}
+    }catch(e){
+      toast('\u274c Print error: '+e.message,'err');
+      console.error('KOT print error:',e);
+      return false;
+    }
   },
+
+  // ── ESC/POS byte builder ──
   textToBytes:function(text){
     const ESC=0x1B,GS=0x1D;
-    const init=[ESC,0x40],cut=[GS,0x56,0x41,0x05],feed=[ESC,0x64,0x04];
+    const init=[ESC,0x40];
+    const cut=[GS,0x56,0x41,0x05];
+    const feed=[ESC,0x64,0x04];
     const center=[ESC,0x61,0x01],left=[ESC,0x61,0x00];
     const bold_on=[ESC,0x45,0x01],bold_off=[ESC,0x45,0x00];
     const dbl_h=[GS,0x21,0x01],normal=[GS,0x21,0x00];
@@ -1051,25 +1133,54 @@ var kotPrinter={
     bytes.push(...feed,...cut);
     return new Uint8Array(bytes);
   },
-  encode:function(str){return Array.from(str).map(c=>{const code=c.charCodeAt(0);return(code<128)?code:63;});},
-  disconnect:function(){try{
-    if(this.type==='bluetooth'&&this.device&&this.device.gatt)this.device.gatt.disconnect();
-    if(this.type==='wired'&&this.device)this.device.close();
-    if(this.type==='usb'&&this.device)this.device.close();
-  }catch(e){}this.device=null;this.characteristic=null;this.type=null;S.s('kotType',null);toast('Printer disconnected');this.updateStatus();},
-  isConnected:function(){return!!(this.device||this.characteristic);},
-  updateStatus:function(){const el=document.getElementById('kotStatus');const hdr=document.getElementById('hdrPrinterStatus');const labels={'bluetooth':'BT','wired':'Serial','usb':'USB'};const fullLabels={'bluetooth':'Bluetooth','wired':'Serial/COM','usb':'USB Direct'};if(this.type){const lbl=fullLabels[this.type]||this.type;const short=labels[this.type]||this.type;if(el){el.textContent='\ud83d\udfe2 Connected ('+lbl+')';el.style.color='var(--green)';}if(hdr){hdr.textContent='\ud83d\udfe2 '+short;hdr.className='hdr-printer-pill connected';}}else{if(el){el.textContent='\ud83d\udd34 Not connected';el.style.color='var(--red)';}if(hdr){hdr.textContent='\ud83d\udd34 No Printer';hdr.className='hdr-printer-pill';}}}
+
+  encode:function(str){
+    return Array.from(str).map(function(c){
+      const code=c.charCodeAt(0);
+      return(code<128)?code:63;
+    });
+  },
+
+  disconnect:function(){
+    try{
+      if(this.type==='bluetooth'&&this.device&&this.device.gatt)this.device.gatt.disconnect();
+      if(this.type==='wired'&&this.device)this.device.close();
+      if(this.type==='usb'&&this.device)this.device.close();
+    }catch(e){}
+    this.device=null;this.characteristic=null;this.type=null;
+    S.s('kotType',null);
+    toast('Printer disconnected');
+    this.updateStatus();
+  },
+
+  isConnected:function(){return !!(this.device||this.characteristic);},
+
+  updateStatus:function(){
+    const el=document.getElementById('kotStatus');
+    const hdr=document.getElementById('hdrPrinterStatus');
+    const shortLabel={'bluetooth':'BT','usb':'USB','wired':'Serial'};
+    const fullLabel={'bluetooth':'Bluetooth BLE','usb':'USB Direct','wired':'Serial/COM'};
+    if(this.type){
+      const sh=shortLabel[this.type]||this.type;
+      const fl=fullLabel[this.type]||this.type;
+      if(el){el.textContent='\ud83d\udfe2 Connected ('+fl+')';el.style.color='var(--green)';}
+      if(hdr){hdr.textContent='\ud83d\udfe2 '+sh;hdr.className='hdr-printer-pill connected';}
+    }else{
+      if(el){el.textContent='\ud83d\udd34 Not connected';el.style.color='var(--red)';}
+      if(hdr){hdr.textContent='\ud83d\udd34 No Printer';hdr.className='hdr-printer-pill';}
+    }
+  }
 };
 
-// PATCH 3: sendKOT now prints BOTH Customer Receipt AND Kitchen KOT
+
+// ── sendKOT: prints Customer Receipt + Kitchen KOT after every order ──
 async function sendKOT(d){
   const SEP='------------------------------------------\n';
 
-  // ── SLIP 1: Customer Receipt with full prices & total ──
+  // SLIP 1: Customer Receipt with prices & total
   const custLines=d.cart.map(i=>{
     const nm=(i.name+'                  ').substring(0,18);
-    const amt=(i.price*i.qty).toFixed(0);
-    return'  '+String(i.qty).padStart(2)+'x '+nm+' Rs.'+amt;
+    return'  '+String(i.qty).padStart(2)+'x '+nm+' Rs.'+(i.price*i.qty).toFixed(0);
   }).join('\n');
   const custText=[
     'CUSTOMER RECEIPT',SEP,
@@ -1077,35 +1188,30 @@ async function sendKOT(d){
     'Pay: '+d.payMethod+(d.staffName?'  Staff: '+d.staffName:''),
     d.custName?'Name: '+d.custName:'',
     d.custPhone?'Ph:   '+d.custPhone:'',
-    SEP,
-    custLines,
-    SEP,
+    SEP,custLines,SEP,
     'Subtotal:        Rs.'+d.subtotal.toFixed(0),
     d.discount>0?'Discount:       -Rs.'+d.discount.toFixed(0):'',
     d.gst>0?'GST:             Rs.'+d.gst.toFixed(0):'',
     '** TOTAL:        Rs.'+d.total.toFixed(0)+' **',
-    SEP,
-    'PARCEL / TAKEAWAY',
+    SEP,'PARCEL / TAKEAWAY',
     d.notes?'Note: '+d.notes:'',
   ].filter(Boolean).join('\n');
   await kotPrinter.print(custText);
 
-  // Wait between slips so printer buffer fully clears
+  // Gap between slips
   await new Promise(r=>setTimeout(r,1200));
 
-  // ── SLIP 2: Kitchen KOT (items + qty for chef) ──
+  // SLIP 2: Kitchen KOT — items + qty only
   const kitLines=d.cart.map(i=>'  '+i.qty+'x '+i.name+(i.note?' ['+i.note+']':'')).join('\n');
   const kotText=[
     'KITCHEN KOT',
     'Token #'+d.invNo+'   '+d.time,
-    'TAKEAWAY',
-    SEP,
-    kitLines,
-    SEP,
+    'TAKEAWAY',SEP,kitLines,SEP,
     d.notes?'** NOTE: '+d.notes+' **':'',
   ].filter(Boolean).join('\n');
   await kotPrinter.print(kotText);
 }
+
 
 async function testPrint(){
   const SEP='------------------------------------------\n';
