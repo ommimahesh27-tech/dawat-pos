@@ -775,7 +775,7 @@ function saveAll(){S.s('cats',cats);S.s('menu',menuItems);S.s('orders',orders);S
 
 function recoverInvNo(){if(!SHEET_URL)return;gsGet('getOrders').then(function(res){if(!res||!res.data||!res.data.length)return;var maxSheet=res.data.reduce(function(mx,row){var n=parseInt(row['InvNo'])||0;return n>mx?n:mx;},0);var maxLocal=orders.reduce(function(mx,o){return o.invNo>mx?o.invNo:mx;},0);var trueMax=Math.max(maxSheet,maxLocal,invNo);if(trueMax>=invNo){invNo=trueMax+1;S.s('invNo',invNo);tick();toast('Invoice number synced: INV #'+invNo,'ok');}}).catch(function(){});}
 
-var SHEET_URL='https://script.google.com/macros/s/AKfycbxnlvvHdIZdrKIm8jjvGnoloQab6PXUUWttKEu-QJNAob5FjtIJk3nuv-w_VKLsB2DZ/exec';
+var SHEET_URL='https://script.google.com/macros/s/AKfycbz8T0M843bzYWMx3YF_u1AMl67a8RpbInRMeID1WtOMxW25E6Q-rMa-ZWz9sWJ4-VOK/exec';
 var syncStatus='idle';
 function gsGet(action){if(!SHEET_URL)return Promise.resolve({ok:false});return fetch(SHEET_URL+'?action='+action).then(function(r){return r.json();}).catch(function(){return{ok:false};});}
 function gsPost(action,data){if(!SHEET_URL)return Promise.resolve({ok:false,msg:'No URL set'});return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})}).then(function(r){return r.json();}).catch(function(e){return{ok:false,error:e.toString()};});}
