@@ -1305,7 +1305,31 @@ function fixInvNumber(){const v=parseInt(document.getElementById('fixInvNo').val
 function saveCredentials(){const u=document.getElementById('newUser').value.trim();const p=document.getElementById('newPass').value;const p2=document.getElementById('newPass2').value;if(!u){toast('Enter a username','err');return;}if(!p){toast('Enter a password','err');return;}if(p!==p2){toast('Passwords do not match','err');return;}if(p.length<4){toast('Password must be at least 4 characters','err');return;}S.s('posUser',u);S.s('posPass',p);toast('\u2705 Credentials updated! Please log in again.','ok');setTimeout(()=>doLogout(),1500);}
 
 function checkSession(){return sessionStorage.getItem('dawat_auth')==='1';}
-function doLogin(){const u=document.getElementById('loginUser').value.trim();const p=document.getElementById('loginPass').value;const savedUser=S.g('posUser','admin');const savedPass=S.g('posPass','dawat123');const err=document.getElementById('loginErr');if(u===savedUser&&p===savedPass){sessionStorage.setItem('dawat_auth','1');document.getElementById('loginScreen').classList.add('hidden');err.classList.remove('show');toast('Welcome back! \ud83d\udc4b','ok');setTimeout(recoverInvNo,1500);}else{err.classList.add('show');document.getElementById('loginPass').value='';document.getElementById('loginPass').focus();const box=document.querySelector('.login-box');box.style.animation='none';box.offsetHeight;box.style.animation='loginShake .4s ease';}}
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const savedUser=S.g('posUser','admin');
+  const savedPass=S.g('posPass','dawat123');
+  const err=document.getElementById('loginErr');
+  if(u===savedUser&&p===savedPass){
+    sessionStorage.setItem('dawat_auth','1');
+    document.getElementById('loginScreen').classList.add('hidden');
+    err.classList.remove('show');
+    toast('\ud83d\udc4b Welcome back! Loading your data\u2026','ok');
+    // Load everything from Sheets on login
+    loadFromSheets(function(){
+      loadOrdersFromSheets();
+      initApp();
+    });
+  }else{
+    err.classList.add('show');
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+    const box=document.querySelector('.login-box');
+    box.style.animation='none';box.offsetHeight;
+    box.style.animation='loginShake .4s ease';
+  }
+}
 function doLogout(){if(!confirm('Logout of DAWAT POS?'))return;sessionStorage.removeItem('dawat_auth');document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';document.getElementById('loginErr').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden');toast('Logged out successfully');}
 
 // ═══ KOT PRINTER — KPC307-UEWB (BLE + WebUSB + Serial) ═══
@@ -1798,34 +1822,151 @@ async function testPrint(){
 function toast(msg,type=''){const w=document.getElementById('toastW');const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
 // INIT
-// Clear old demo data if present (one-time cleanup)
-(function clearDemoData(){
-  const cleaned=S.g('demoCleared',false);
-  if(!cleaned){
-    // Remove demo items if they match original demo names
-    const demoItems=['Chicken Dum Biryani','Mutton Biryani','Egg Biryani','Veg Biryani',
-      'Fish Biryani','Chicken Pulao','Mutton Pulao','Veg Pulao','Chicken Fry',
-      'Chicken 65','Naan','Roti','Cold Drink','Lassi','Raita','Mirchi Ka Salan','Phirni'];
-    const hasDemo=menuItems.some(i=>demoItems.includes(i.name));
-    if(hasDemo){
-      menuItems=[];
-      cats=[];
-      // Remove Raju if present
-      staffList=staffList.filter(s=>s.name!=='Raju');
-      saveAll();
-      console.log('DAWAT: Demo data cleared');
+// ── STARTUP: Load all data from Google Sheets ──
+function loadFromSheets(onDone){
+  setSyncStatus('syncing');
+  toast('\u2601\ufe0f Loading data from Google Sheets\u2026');
+  gsGet('getAll')
+  .then(function(res){
+    if(!res||!res.ok||!res.data){
+      setSyncStatus('err');
+      toast('\u26a0\ufe0f Could not load from Sheets \u2014 using local data','err');
+      if(onDone)onDone();
+      return;
     }
-    S.s('demoCleared',true);
+    var d=res.data;
+
+    // ── Menu items ──
+    if(d.menu&&d.menu.length>0){
+      menuItems=d.menu;
+      S.s('menu',menuItems);
+    }
+    // ── Categories ──
+    if(d.cats&&d.cats.length>0){
+      cats=d.cats;
+      S.s('cats',cats);
+    }
+    // ── Staff ──
+    if(d.staff&&d.staff.length>0){
+      staffList=d.staff;
+      S.s('staff',staffList);
+    }
+    // ── Loyalty ──
+    if(d.loyalty&&d.loyalty.length>0){
+      loyaltyDb=d.loyalty;
+      S.s('loyalty',loyaltyDb);
+    }
+    // ── Settings (name, address, phone, footer, PIN etc) ──
+    if(d.settings&&Object.keys(d.settings).length>0){
+      var ss=d.settings;
+      // Merge into shop — keep logo from local (not in Sheets)
+      var localLogo=shop.logo||'';
+      if(ss.name)shop.name=ss.name;
+      if(ss.tagline)shop.tagline=ss.tagline;
+      if(ss.address)shop.address=ss.address;
+      if(ss.phone)shop.phone=ss.phone;
+      if(ss.footer)shop.footer=ss.footer;
+      if(ss.adminPin)shop.adminPin=ss.adminPin;
+      if(ss.loyaltyRate)shop.loyaltyRate=parseInt(ss.loyaltyRate)||10;
+      if(ss.loyaltyRedeemPer)shop.loyaltyRedeemPer=parseInt(ss.loyaltyRedeemPer)||100;
+      if(ss.gstPct)shop.gstPct=parseFloat(ss.gstPct)||5;
+      shop.logo=localLogo; // keep logo local
+      S.s('shop',shop);
+    }
+    // ── Credentials ──
+    if(d.credentials&&d.credentials.user){
+      S.s('posUser',d.credentials.user);
+      S.s('posPass',d.credentials.pass);
+    }
+    // ── Invoice Number ──
+    if(d.invNo&&parseInt(d.invNo)>invNo){
+      invNo=parseInt(d.invNo);
+      S.s('invNo',invNo);
+    }
+
+    setSyncStatus('ok');
+    setTimeout(function(){setSyncStatus('idle');},4000);
+    toast('\u2705 Data loaded from Google Sheets!','ok');
+    console.log('DAWAT: Loaded from Sheets \u2014 menu:'+menuItems.length+' cats:'+cats.length);
+    if(onDone)onDone();
+  })
+  .catch(function(e){
+    setSyncStatus('err');
+    toast('\u26a0\ufe0f Sheets error: '+e.message+' \u2014 using local data','err');
+    if(onDone)onDone();
+  });
+}
+
+// ── Also add getAll to getOrders for orders history ──
+function loadOrdersFromSheets(){
+  gsGet('getOrders')
+  .then(function(res){
+    if(!res||!res.ok||!res.data||!res.data.length)return;
+    // Merge Sheets orders with local orders (avoid duplicates by invNo)
+    var localInvNos=new Set(orders.map(function(o){return o.invNo;}));
+    var newOrders=res.data.filter(function(o){return!localInvNos.has(parseInt(o.InvNo||o.invNo));});
+    if(newOrders.length>0){
+      // Map Sheets columns to app format
+      var mapped=newOrders.map(function(o){
+        return{
+          invNo:parseInt(o.InvNo||o.invNo)||0,
+          date:o.Date||o.date||'',
+          time:o.Time||o.time||'',
+          custName:o.CustName||o.custName||'',
+          custPhone:o.CustPhone||o.custPhone||'',
+          staffName:o.Staff||o.staffName||'',
+          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
+          discount:parseFloat(o.Discount||o.discount)||0,
+          gst:parseFloat(o.GST||o.gst)||0,
+          total:parseFloat(o.Total||o.total)||0,
+          payMethod:o.PayMethod||o.payMethod||'CASH',
+          notes:o.Notes||o.notes||'',
+          status:o.Status||o.status||'delivered',
+          savedAt:o.SavedAt||o.savedAt||Date.now(),
+          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+        };
+      });
+      orders=orders.concat(mapped);
+      // Sort by invNo descending
+      orders.sort(function(a,b){return b.invNo-a.invNo;});
+      S.s('orders',orders);
+      toast('\u2705 Loaded '+mapped.length+' orders from Sheets','ok');
+    }
+  })
+  .catch(function(){});
+}
+
+// ── INIT ──
+function initApp(){
+  renderCatTabs();renderMenuGrid();renderCart();renderStaffSelect();
+  kotPrinter.processLogo();tick();
+  const lowStockItems=menuItems.filter(i=>i.stock<=i.lowAt&&i.stock>0);
+  const outItemsInit=menuItems.filter(i=>i.stock<=0);
+  if(menuItems.length===0){toast('\u2601\ufe0f Loading menu from Google Sheets\u2026');}
+  else if(outItemsInit.length)toast('\u26a0\ufe0f '+outItemsInit.length+' items out of stock!','err');
+  else if(lowStockItems.length)toast('\u26a0\ufe0f '+lowStockItems.length+' items running low');
+}
+
+if(checkSession()){
+  document.getElementById('loginScreen').classList.add('hidden');
+  // Load from Sheets first, then init UI
+  loadFromSheets(function(){
+    loadOrdersFromSheets();
+    initApp();
+  });
+}else{
+  initApp();
+  setTimeout(()=>document.getElementById('loginUser').focus(),100);
+}
+// Auto sync every 5 minutes
+setInterval(function(){
+  if(checkSession()&&syncStatus==='idle'){
+    loadFromSheets(function(){
+      loadOrdersFromSheets();
+      renderCatTabs();renderMenuGrid();renderStaffSelect();
+    });
   }
-})();
-renderCatTabs();renderMenuGrid();renderCart();renderStaffSelect();kotPrinter.processLogo();
-const lowStockItems=menuItems.filter(i=>i.stock<=i.lowAt&&i.stock>0);
-const outItemsInit=menuItems.filter(i=>i.stock<=0);
-if(menuItems.length===0){toast('\ud83d\udce2 Welcome! Add your menu items in Admin \u2192 Items','ok');}
-else if(outItemsInit.length)toast('\u26a0\ufe0f '+outItemsInit.length+' items out of stock!','err');
-else if(lowStockItems.length)toast('\u26a0\ufe0f '+lowStockItems.length+' items running low');
-if(checkSession()){document.getElementById('loginScreen').classList.add('hidden');setTimeout(recoverInvNo,1500);}
-else{setTimeout(()=>document.getElementById('loginUser').focus(),100);}
+},5*60*1000);
 document.getElementById('printModal').addEventListener('click',function(e){if(e.target===this)closePrint();});
 document.getElementById('noteMdl').addEventListener('click',function(e){if(e.target===this)closeNote();});
 document.getElementById('staffMdl').addEventListener('click',function(e){if(e.target===this)closeStaffMdl();});
