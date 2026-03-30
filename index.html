@@ -900,7 +900,64 @@ function sendWhatsApp(){
 function buildSnap(){const now=new Date();return{invNo,date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'}),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}),custName:document.getElementById('custName').value||'',custPhone:document.getElementById('custPhone').value||'',notes:document.getElementById('ordNotes').value||'',cart:cart.map(function(c){return Object.assign({},c);}),subtotal:getSub(),discount:getDisc(),loyaltyRedeem:loyaltyRedeemAmt,gst:getGst(),gstPct:parseFloat((document.getElementById('gstPct')?document.getElementById('gstPct').value:0))||0,gstEnabled:(document.getElementById('gstChk')?document.getElementById('gstChk').checked:false)||false,total:getTotal(),payMethod,discType,discVal:parseFloat((document.getElementById('discVal')?document.getElementById('discVal').value:0))||0,savedAt:Date.now(),staffId:currentStaff.id,staffName:currentStaff.name,status:'pending'};}
 
 var lastPrintSnap=null;
-function doPrint(type){if(!cart.length){toast('Add items first!','err');return;}if(!lastPrintSnap){const d=buildSnap();d.cart.forEach(ci=>{const mi=menuItems.find(m=>m.id===ci.id);if(mi)mi.stock=Math.max(0,mi.stock-ci.qty);});orders.unshift(d);if(cashRegister.open){cashRegister.entries.push({time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),type:'Sale',method:d.payMethod,amount:d.total,inv:'#'+d.invNo});}const phone=document.getElementById('custPhone').value.trim();if(phone&&phone.length>=10){let lc=loyaltyDb.find(c=>c.phone===phone);const ptsEarned=Math.floor(d.total/shop.loyaltyRate);if(lc){lc.points=Math.max(0,(lc.points-Math.floor(loyaltyRedeemAmt*shop.loyaltyRate))+ptsEarned);lc.visits++;lc.name=document.getElementById('custName').value||lc.name;}else{loyaltyDb.push({id:'lc'+Date.now(),name:document.getElementById('custName').value||'Customer',phone,points:ptsEarned,visits:1});}}invNo++;saveAll();tick();syncAfterOrder(d);sendKOT(d);loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;document.getElementById('loyaltyBar').style.display='none';document.getElementById('loyRow').style.display='none';lastPrintSnap=d;renderMenuGrid();}const d=lastPrintSnap;const slips={customer:custSlip(d),kitchen:chefSlip(d)};document.getElementById('slipsWrap').innerHTML=type==='all'?slips.customer+slips.kitchen:slips[type];document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
+function doPrint(type){
+  if(!cart.length){toast('Add items first!','err');return;}
+  if(!lastPrintSnap){
+    const d=buildSnap();
+    // Deduct stock
+    d.cart.forEach(ci=>{const mi=menuItems.find(m=>m.id===ci.id);if(mi)mi.stock=Math.max(0,mi.stock-ci.qty);});
+    // Save order
+    orders.unshift(d);
+    // Cash register entry
+    if(cashRegister.open){cashRegister.entries.push({time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),type:'Sale',method:d.payMethod,amount:d.total,inv:'#'+d.invNo});}
+    // Loyalty points
+    const phone=document.getElementById('custPhone').value.trim();
+    if(phone&&phone.length>=10){
+      let lc=loyaltyDb.find(c=>c.phone===phone);
+      const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
+      if(lc){lc.points=Math.max(0,(lc.points-Math.floor(loyaltyRedeemAmt*shop.loyaltyRate))+ptsEarned);lc.visits++;lc.name=document.getElementById('custName').value||lc.name;}
+      else{loyaltyDb.push({id:'lc'+Date.now(),name:document.getElementById('custName').value||'Customer',phone,points:ptsEarned,visits:1});}
+    }
+    invNo++;saveAll();tick();
+    syncAfterOrder(d);
+    sendKOT(d); // auto-send to BT/USB printer
+    loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;
+    document.getElementById('loyaltyBar').style.display='none';
+    document.getElementById('loyRow').style.display='none';
+    lastPrintSnap=d;
+    renderMenuGrid();
+  }
+
+  const d=lastPrintSnap;
+
+  // ── If BT/USB printer is connected → send directly, NO browser dialog ──
+  if(kotPrinter.isConnected()){
+    if(type==='all'||type==='customer'){
+      kotPrinter.print(custSlip_text(d));
+    }
+    if(type==='all'){
+      // KOT already sent via sendKOT above on first print
+      // For manual re-print of kitchen:
+    }
+    if(type==='kitchen'){
+      kotPrinter.print(chefSlip_text(d),false);
+    }
+    toast('\u2705 Printed to '+( kotPrinter.type==='bluetooth'?'Bluetooth':'USB')+' printer!','ok');
+    // Ask new order after short delay
+    setTimeout(function(){
+      if(confirm('\u2705 Order #'+d.invNo+' sent to printer!\n\nStart a new order?')){
+        lastPrintSnap=null;newOrder();
+      }
+    },500);
+    return;
+  }
+
+  // ── No printer connected → show browser print dialog ──
+  const slips={customer:custSlip(d),kitchen:chefSlip(d)};
+  document.getElementById('slipsWrap').innerHTML=type==='all'?slips.customer+slips.kitchen:slips[type];
+  document.getElementById('printModal').classList.add('show');
+  setTimeout(()=>window.print(),350);
+}
 function closePrint(){document.getElementById('printModal').classList.remove('show');if(lastPrintSnap){setTimeout(()=>{if(confirm('\u2705 Order #'+lastPrintSnap.invNo+' printed!\n\nStart a new order?')){lastPrintSnap=null;newOrder();}},200);}}
 
 function custSlip(d){const rows=d.cart.map(i=>`<tr><td>${i.name}${i.note?`<br><i style="font-size:8px;color:#777">${i.note}</i>`:''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">\u20b9${i.price}</td><td style="text-align:right">\u20b9${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');return`<div class="rcpt"><div class="rl cust">Customer Receipt</div><div class="rb"><h2>${shop.name}</h2><p>${shop.tagline}<br>${shop.address}${shop.phone?'<br>'+shop.phone:''}</p></div><hr><div class="rmeta"><span>Inv: <b>#${d.invNo}</b></span><span>Date: ${d.date}</span><span>Time: ${d.time}</span><span>Pay: ${d.payMethod}</span><span>Staff: ${d.staffName||'\u2014'}</span>${d.custName?`<span style="grid-column:span 2">Name: ${d.custName}</span>`:''}${d.custPhone?`<span style="grid-column:span 2">Ph: ${d.custPhone}</span>`:''}</div><hr><table><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amt</th></tr>${rows}</table><hr><table><tr><td>Subtotal</td><td style="text-align:right">\u20b9${d.subtotal.toFixed(2)}</td></tr>${d.discount>0?`<tr><td>Discount${d.discType==='pct'?` (${d.discVal}%)`:''}</td><td style="text-align:right;color:green">-\u20b9${d.discount.toFixed(2)}</td></tr>`:''}${d.loyaltyRedeem>0?`<tr><td>\ud83c\udf81 Points Redeem</td><td style="text-align:right;color:purple">-\u20b9${d.loyaltyRedeem.toFixed(2)}</td></tr>`:''}${d.gst>0?`<tr><td>GST (${d.gstPct}%)</td><td style="text-align:right">\u20b9${d.gst.toFixed(2)}</td></tr>`:''}<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9${d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="text-align:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="rfoot">PARCEL / TAKEAWAY<br>${shop.footer}</div></div>`;}
@@ -1578,6 +1635,73 @@ var kotPrinter={
 
 
 // ── sendKOT: prints Customer Receipt + Kitchen KOT after every order ──
+// ── Plain text versions for direct printer output ──
+function custSlip_text(d){
+  const SEP='------------------------------------------\n';
+  const W=42;
+  function pad(s,n){return(s+'').padEnd(n).substring(0,n);}
+  function rpad(s,n){return(s+'').padStart(n).substring(0,n);}
+  const header='  Item                 Rate    Amount';
+  const divider='-'.repeat(W);
+  const lines=d.cart.map(function(i){
+    return pad(i.qty+'x '+i.name,22)+' '+rpad('Rs.'+i.price,7)+' '+rpad('Rs.'+(i.price*i.qty).toFixed(0),8);
+  }).join('\n');
+  const lc=loyaltyDb.find(function(c){return c.phone===d.custPhone;});
+  let loyaltySection='';
+  if(lc&&d.custPhone&&d.custPhone.length>=10){
+    const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
+    const redeemVal=Math.floor(lc.points/shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);
+    loyaltySection='\n==========================================\n'
+      +'       ** LOYALTY REWARDS **\n'
+      +'==========================================\n'
+      +'  Earned this visit:  +'+ptsEarned+' pts\n'
+      +'  Total points:        '+lc.points+' pts\n'
+      +(redeemVal>0?'  Redeem next visit:   Rs.'+redeemVal.toFixed(0)+'\n':'  Keep earning points!\n')
+      +'  (1 pt per Rs.'+shop.loyaltyRate+' spent)\n'
+      +'==========================================';
+  }
+  return [
+    'CUSTOMER RECEIPT',divider,
+    'Inv: #'+d.invNo+'   Date: '+d.date,
+    'Time: '+d.time+'   Pay: '+d.payMethod,
+    d.staffName?'Staff: '+d.staffName:'',
+    d.custName?'Name:  '+d.custName:'',
+    d.custPhone?'Phone: '+d.custPhone:'',
+    divider,header,divider,lines,divider,
+    rpad('Subtotal:',30)+rpad('Rs.'+d.subtotal.toFixed(0),12),
+    d.discount>0?rpad('Discount:',30)+rpad('-Rs.'+d.discount.toFixed(0),12):'',
+    d.gst>0?rpad('GST ('+d.gstPct+'%):',30)+rpad('Rs.'+d.gst.toFixed(0),12):'',
+    divider,
+    rpad('** TOTAL:',30)+rpad('Rs.'+d.total.toFixed(0),12),
+    divider,'PARCEL / TAKEAWAY',
+    d.notes?'Note: '+d.notes:'',divider,
+    shop.footer||'Thank you! Visit again.',
+    loyaltySection,
+  ].filter(Boolean).join('\n');
+}
+
+function chefSlip_text(d){
+  const SEP='------------------------------------------\n';
+  const W=42;
+  const divider='-'.repeat(W);
+  const kitLines=d.cart.map(function(i){
+    return'  '+String(i.qty).padStart(2)+'x  '+i.name+(i.note?'\n       >> '+i.note:'');
+  }).join('\n');
+  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  return [
+    '======  KITCHEN KOT  ======',
+    'Token: #'+d.invNo,
+    'Date:  '+d.date+'   Time: '+d.time,
+    'Type:  TAKEAWAY',
+    d.staffName?'Staff: '+d.staffName:'',
+    divider,'  Qty   Item',divider,
+    kitLines,divider,
+    'Total Items: '+totalQty,
+    d.notes?'\n*** NOTE: '+d.notes+' ***':'',
+  ].filter(Boolean).join('\n');
+}
+
+
 async function sendKOT(d){
   const SEP='------------------------------------------\n';
   const W=42; // print width chars for 80mm Font A
