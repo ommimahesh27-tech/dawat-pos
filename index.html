@@ -152,7 +152,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 .print-all{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--dark);border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .2s;letter-spacing:1px;margin-bottom:6px;}
 .print-all:hover{opacity:.85;}
 .print-all:active{opacity:.7;}
-.psubs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px;}
+.psubs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;}
 .psub{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:8px 4px;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .psub:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
 .psub .psub-icon{font-size:16px;}
@@ -160,8 +160,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 .psub.cust-btn:hover{border-color:var(--green);background:rgba(74,154,90,.08);}
 .psub.chef-btn{border-color:rgba(208,112,48,.4);color:var(--orange);}
 .psub.chef-btn:hover{border-color:var(--orange);background:rgba(208,112,48,.08);}
-.psub.pack-btn{border-color:rgba(58,122,192,.4);color:var(--blue);}
-.psub.pack-btn:hover{border-color:var(--blue);background:rgba(58,122,192,.08);}
+
 .wa-btn{width:100%;background:rgba(37,211,102,.12);border:1px solid #25d366;border-radius:7px;padding:8px;font-size:11px;font-weight:700;color:#25d366;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:5px;transition:opacity .2s;}
 .wa-btn:hover{opacity:.8;}
 .new-ord{width:100%;background:none;border:1px solid var(--border);border-radius:6px;padding:7px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;transition:all .2s;}
@@ -423,7 +422,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
   .disc-sec{padding:6px 10px;}.disc-btns{gap:4px;}.dbt{padding:5px 2px;font-size:9px;}.disc-presets{gap:3px;}.dp{padding:3px 6px;font-size:9px;}.gst-row{flex-wrap:wrap;gap:5px;}
   .bill-tots{padding:6px 10px;}.tr{font-size:10px;}.tr.grand{font-size:15px;}
   .bill-pay{padding:7px 10px;}.pay-row{gap:3px;}.pay-btn{padding:6px 2px;font-size:9px;}.print-all{padding:9px;font-size:12px;}
-  .psubs{gap:4px;}.psub{padding:7px 2px;font-size:9px;}.psub .psub-icon{font-size:14px;}.wa-btn{padding:7px;font-size:10px;}.new-ord{padding:6px;font-size:9px;}
+  .psubs{gap:4px;}.psub{padding:9px 4px;font-size:10px;}.psub .psub-icon{font-size:14px;}.wa-btn{padding:7px;font-size:10px;}.new-ord{padding:6px;font-size:9px;}
   .mob-fab{display:flex;align-items:center;}
   .sum-bar{grid-template-columns:1fr 1fr;}.rpt-kpis{grid-template-columns:1fr 1fr;}.cash-grid{grid-template-columns:1fr;}
   .menu-grid{grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:6px;}.token-grid{grid-template-columns:1fr 1fr;}.orders-grid{grid-template-columns:1fr;}.staff-grid{grid-template-columns:1fr 1fr;}
@@ -600,11 +599,11 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
         <input type="number" id="tendAmt" placeholder="Given" oninput="calcChg()">
         <span class="chg" id="chgDisp"></span>
       </div>
-      <button class="print-all" onclick="doPrint('all')">🖨 Print All 3 Slips</button>
+      <button class="print-all" onclick="doPrint('all')">🖨 Print Bill + KOT</button>
       <div class="psubs">
         <button class="psub cust-btn" onclick="doPrint('customer')"><span class="psub-icon">🧾</span>Customer<br><span style="font-size:8px;opacity:.7">Billing Printer</span></button>
         <button class="psub chef-btn" onclick="doPrint('kitchen')"><span class="psub-icon">👨‍🍳</span>Chef<br><span style="font-size:8px;opacity:.7">Kitchen Printer</span></button>
-        <button class="psub pack-btn" onclick="doPrint('packing')"><span class="psub-icon">📦</span>Packing<br><span style="font-size:8px;opacity:.7">Pack Printer</span></button>
+        
       </div>
       <button class="wa-btn" onclick="sendWhatsApp()">💬 WhatsApp Receipt</button>
       <button class="new-ord" onclick="newOrder()">🔄 New Order</button>
@@ -757,29 +756,11 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 
 <script>
 var S={g:function(k,d){try{var v=localStorage.getItem('dw4_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},s:function(k,v){try{localStorage.setItem('dw4_'+k,JSON.stringify(v));}catch(e){}}};
-let shop=S.g('shop',{name:'DAWAT',tagline:'Takeaway Point',address:'Visakhapatnam',phone:'',footer:'Thank you for choosing DAWAT! \ud83c\udf5b',adminPin:'1234',gstEnabled:false,gstPct:5,loyaltyRate:10,loyaltyRedeemPer:100});
-let cats=S.g('cats',[{id:'c1',name:'Biryani',emoji:'\ud83c\udf5b'},{id:'c2',name:'Pulao',emoji:'\ud83c\udf72'},{id:'c3',name:'Starters',emoji:'\ud83c\udf17'},{id:'c4',name:'Breads',emoji:'\ud83c\udf5e'},{id:'c5',name:'Beverages',emoji:'\ud83e\udd64'},{id:'c6',name:'Extras',emoji:'\ud83e\udd57'}]);
-let menuItems=S.g('menu',[
-  {id:'m1',catId:'c1',name:'Chicken Dum Biryani',emoji:'\ud83c\udf5b',price:150,avail:true,stock:50,lowAt:10},
-  {id:'m2',catId:'c1',name:'Mutton Biryani',emoji:'\ud83c\udf5b',price:200,avail:true,stock:30,lowAt:5},
-  {id:'m3',catId:'c1',name:'Egg Biryani',emoji:'\ud83e\udd5a',price:100,avail:true,stock:40,lowAt:8},
-  {id:'m4',catId:'c1',name:'Veg Biryani',emoji:'\ud83c\udf3f',price:90,avail:true,stock:35,lowAt:8},
-  {id:'m5',catId:'c1',name:'Fish Biryani',emoji:'\ud83d\udc1f',price:180,avail:true,stock:20,lowAt:5},
-  {id:'m6',catId:'c2',name:'Chicken Pulao',emoji:'\ud83c\udf72',price:130,avail:true,stock:25,lowAt:5},
-  {id:'m7',catId:'c2',name:'Mutton Pulao',emoji:'\ud83c\udf72',price:175,avail:true,stock:20,lowAt:5},
-  {id:'m8',catId:'c2',name:'Veg Pulao',emoji:'\ud83e\udd66',price:85,avail:true,stock:30,lowAt:8},
-  {id:'m9',catId:'c3',name:'Chicken Fry',emoji:'\ud83c\udf17',price:120,avail:true,stock:40,lowAt:10},
-  {id:'m10',catId:'c3',name:'Chicken 65',emoji:'\ud83c\udf36\ufe0f',price:130,avail:true,stock:30,lowAt:8},
-  {id:'m11',catId:'c4',name:'Naan',emoji:'\ud83c\udf5e',price:20,avail:true,stock:100,lowAt:20},
-  {id:'m12',catId:'c4',name:'Roti',emoji:'\ud83e\uded3',price:15,avail:true,stock:80,lowAt:20},
-  {id:'m13',catId:'c5',name:'Cold Drink',emoji:'\ud83e\udd64',price:40,avail:true,stock:50,lowAt:10},
-  {id:'m14',catId:'c5',name:'Lassi',emoji:'\ud83e\udd5b',price:50,avail:true,stock:30,lowAt:8},
-  {id:'m15',catId:'c6',name:'Raita',emoji:'\ud83e\udd57',price:30,avail:true,stock:60,lowAt:15},
-  {id:'m16',catId:'c6',name:'Mirchi Ka Salan',emoji:'\ud83c\udf36\ufe0f',price:40,avail:true,stock:40,lowAt:10},
-  {id:'m17',catId:'c6',name:'Phirni',emoji:'\ud83e\uddc1',price:50,avail:true,stock:25,lowAt:5},
-]);
+let shop=S.g('shop',{name:'DAWAT',tagline:'Takeaway Point',address:'Visakhapatnam',phone:'',footer:'Thank you for choosing DAWAT! \ud83c\udf5b',adminPin:'1234',gstEnabled:false,gstPct:5,loyaltyRate:10,loyaltyRedeemPer:100,logo:''});
+let cats=S.g('cats',[]);
+let menuItems=S.g('menu',[]);
 let orders=S.g('orders',[]);let preOrders=S.g('preorders',[]);
-let staffList=S.g('staff',[{id:'s1',name:'Owner',role:'Manager',pin:'1234'},{id:'s2',name:'Raju',role:'Cashier',pin:'0000'}]);
+let staffList=S.g('staff',[{id:'s1',name:'Owner',role:'Manager',pin:'1234'}]);
 let loyaltyDb=S.g('loyalty',[]);
 let cashRegister=S.g('cashReg',{open:false,openAmt:0,openTime:null,entries:[],closeAmt:0,closeTime:null});
 let invNo=S.g('invNo',1001);let preInvNo=S.g('preInvNo',5001);
@@ -792,16 +773,16 @@ let adminUnlocked=false;
 
 function saveAll(){S.s('cats',cats);S.s('menu',menuItems);S.s('orders',orders);S.s('invNo',invNo);S.s('shop',shop);S.s('staff',staffList);S.s('loyalty',loyaltyDb);S.s('cashReg',cashRegister);S.s('preorders',preOrders);S.s('preInvNo',preInvNo);}
 
-function recoverInvNo(){if(!SHEET_URL||SHEET_URL.indexOf('YOUR_APPS')!==-1)return;gsGet('getOrders').then(function(res){if(!res||!res.data||!res.data.length)return;var maxSheet=res.data.reduce(function(mx,row){var n=parseInt(row['InvNo'])||0;return n>mx?n:mx;},0);var maxLocal=orders.reduce(function(mx,o){return o.invNo>mx?o.invNo:mx;},0);var trueMax=Math.max(maxSheet,maxLocal,invNo);if(trueMax>=invNo){invNo=trueMax+1;S.s('invNo',invNo);tick();toast('Invoice number synced: INV #'+invNo,'ok');}}).catch(function(){});}
+function recoverInvNo(){if(!SHEET_URL)return;gsGet('getOrders').then(function(res){if(!res||!res.data||!res.data.length)return;var maxSheet=res.data.reduce(function(mx,row){var n=parseInt(row['InvNo'])||0;return n>mx?n:mx;},0);var maxLocal=orders.reduce(function(mx,o){return o.invNo>mx?o.invNo:mx;},0);var trueMax=Math.max(maxSheet,maxLocal,invNo);if(trueMax>=invNo){invNo=trueMax+1;S.s('invNo',invNo);tick();toast('Invoice number synced: INV #'+invNo,'ok');}}).catch(function(){});}
 
-var SHEET_URL=S.g('sheetUrl','YOUR_APPS_SCRIPT_WEB_APP_URL_HERE');
+var SHEET_URL='https://script.google.com/macros/s/AKfycbxnlvvHdIZdrKIm8jjvGnoloQab6PXUUWttKEu-QJNAob5FjtIJk3nuv-w_VKLsB2DZ/exec';
 var syncStatus='idle';
-function gsGet(action){if(!SHEET_URL||SHEET_URL.indexOf('YOUR_APPS')!==-1)return Promise.resolve({ok:false});return fetch(SHEET_URL+'?action='+action).then(function(r){return r.json();}).catch(function(){return{ok:false};});}
-function gsPost(action,data){if(!SHEET_URL||SHEET_URL.indexOf('YOUR_APPS')!==-1)return Promise.resolve({ok:false,msg:'No URL set'});return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})}).then(function(r){return r.json();}).catch(function(e){return{ok:false,error:e.toString()};});}
+function gsGet(action){if(!SHEET_URL)return Promise.resolve({ok:false});return fetch(SHEET_URL+'?action='+action).then(function(r){return r.json();}).catch(function(){return{ok:false};});}
+function gsPost(action,data){if(!SHEET_URL)return Promise.resolve({ok:false,msg:'No URL set'});return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})}).then(function(r){return r.json();}).catch(function(e){return{ok:false,error:e.toString()};});}
 function syncAfterOrder(orderSnap){setSyncStatus('syncing');gsPost('saveOrder',orderSnap).then(function(r1){if(!r1.ok){setSyncStatus('err');return;}return gsPost('syncLoyalty',loyaltyDb);}).then(function(r2){if(!r2)return;return gsPost('syncMenu',menuItems);}).then(function(){setSyncStatus('ok');setTimeout(function(){setSyncStatus('idle');},4000);}).catch(function(){setSyncStatus('err');});}
-function syncAllData(){if(!SHEET_URL||SHEET_URL.indexOf('YOUR_APPS')!==-1){toast('Set your Google Sheets URL in Admin > Settings first!','err');return;}setSyncStatus('syncing');toast('Syncing to Google Sheets\u2026');gsPost('syncAll',{menu:menuItems,cats:cats,staff:staffList,loyalty:loyaltyDb,settings:shop}).then(function(r){if(r&&r.ok){setSyncStatus('ok');toast('Synced to Google Sheets!','ok');setTimeout(function(){setSyncStatus('idle');},4000);}else{setSyncStatus('err');toast('Sync failed \u2014 check URL','err');}}).catch(function(){setSyncStatus('err');toast('Sync error','err');});}
+function syncAllData(){if(!SHEET_URL){toast('No Sheets URL set','err');return;}setSyncStatus('syncing');toast('Syncing to Google Sheets\u2026');gsPost('syncAll',{menu:menuItems,cats:cats,staff:staffList,loyalty:loyaltyDb,settings:shop}).then(function(r){if(r&&r.ok){setSyncStatus('ok');toast('Synced to Google Sheets!','ok');setTimeout(function(){setSyncStatus('idle');},4000);}else{setSyncStatus('err');toast('Sync failed \u2014 check URL','err');}}).catch(function(){setSyncStatus('err');toast('Sync error','err');});}
 function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
-function saveSheetUrl(){var u=(document.getElementById('sheetUrlInput')?document.getElementById('sheetUrlInput').value.trim():'');if(!u){toast('Paste your Apps Script URL','err');return;}SHEET_URL=u;S.s('sheetUrl',u);toast('URL saved! Testing connection\u2026','ok');syncAllData();}
+function saveSheetUrl(){toast('\u2705 URL is hardcoded in the app','ok');syncAllData();}
 
 function tick(){const n=new Date();document.getElementById('clkT').textContent=n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});document.getElementById('clkD').textContent=n.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'});document.getElementById('invPill').textContent='INV #'+invNo;document.getElementById('staffBadge').textContent='\ud83d\udc64 '+currentStaff.name;}
 setInterval(tick,1000);tick();
@@ -834,7 +815,11 @@ function redeemPoints(){if(!loyaltyFoundCustomer)return;const pts=loyaltyFoundCu
 
 function renderCatTabs(){const el=document.getElementById('catTabs');el.innerHTML=`<button class="cat-tab ${activeCat==='all'?'active':''}" onclick="setCat('all',this)">\ud83c\udf7d All</button>`+cats.map(c=>`<button class="cat-tab ${activeCat===c.id?'active':''}" onclick="setCat('${c.id}',this)">${c.emoji} ${c.name}</button>`).join('');}
 function setCat(id,btn){activeCat=id;document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('srchInp').value='';renderMenuGrid();}
-function renderMenuGrid(q=''){const grid=document.getElementById('menuGrid');let items=menuItems.filter(i=>i.avail);if(activeCat!=='all')items=items.filter(i=>i.catId===activeCat);if(q)items=items.filter(i=>i.name.toLowerCase().includes(q.toLowerCase()));if(!items.length){grid.innerHTML=`<div class="no-res"><span style="font-size:28px">\ud83d\udd0d</span><p style="font-size:11px">No items</p></div>`;return;}const cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));grid.innerHTML=items.map(i=>{const stockCls=i.stock===0?'out-stock':i.stock<=i.lowAt?'low-stock':'';return`<div class="menu-card ${stockCls}" onclick="addCart('${i.id}')"><span class="mc-emoji">${i.emoji||'\ud83c\udf7d'}</span><div class="mc-name">${i.name}</div><div class="mc-price">\u20b9${i.price}</div><div class="mc-stock">${cm[i.catId]||''} ${i.stock>0?'\u00b7 '+i.stock+' left':''}</div></div>`;}).join('');}
+function renderMenuGrid(q=''){const grid=document.getElementById('menuGrid');let items=menuItems.filter(i=>i.avail);if(activeCat!=='all')items=items.filter(i=>i.catId===activeCat);if(q)items=items.filter(i=>i.name.toLowerCase().includes(q.toLowerCase()));if(!items.length){grid.innerHTML=`<div class="no-res"><span style="font-size:28px">\ud83d\udd0d</span><p style="font-size:11px">No items</p></div>`;return;}const cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));grid.innerHTML=items.map(i=>{const stockCls=i.stock===0?'out-stock':i.stock<=i.lowAt?'low-stock':'';
+  const imgHtml=i.image
+    ?`<img src="${i.image}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;margin-bottom:4px;display:block">`
+    :`<span class="mc-emoji">${i.emoji||'\ud83c\udf7d'}</span>`;
+  return`<div class="menu-card ${stockCls}" onclick="addCart('${i.id}')">${imgHtml}<div class="mc-name">${i.name}</div><div class="mc-price">\u20b9${i.price}</div><div class="mc-stock">${cm[i.catId]||''} ${i.stock>0?'\u00b7 '+i.stock+' left':''}</div></div>`;}).join('');}
 function filterMenu(){const q=document.getElementById('srchInp').value;if(q)activeCat='all';renderMenuGrid(q);}
 function clearSrch(){document.getElementById('srchInp').value='';renderMenuGrid();}
 
@@ -856,17 +841,70 @@ function calcChg(){const given=parseFloat(document.getElementById('tendAmt').val
 function recalc(){const sub=getSub(),disc=getDisc(),gst=getGst(),tot=getTotal();const discRow=document.getElementById('discRow'),gstRow=document.getElementById('gstRow');document.getElementById('tSub').textContent='\u20b9'+sub.toFixed(2);document.getElementById('tTot').textContent='\u20b9'+tot.toFixed(2);if(disc>0){discRow.style.display='flex';document.getElementById('tDisc').textContent='-\u20b9'+disc.toFixed(2);document.getElementById('discRowLbl').textContent=discType==='pct'?`Discount (${document.getElementById('discVal').value}%)`:discType==='flat'?'Discount':'Discount';}else discRow.style.display='none';if(gst>0){gstRow.style.display='flex';document.getElementById('tGst').textContent='\u20b9'+gst.toFixed(2);document.getElementById('gstLbl').textContent=`GST (${document.getElementById('gstPct').value}%)`;}else gstRow.style.display='none';calcChg();calcSplit();}
 function renderCart(){const el=document.getElementById('orderList');const cnt=cart.reduce((s,i)=>s+i.qty,0);document.getElementById('itmCnt').textContent=cnt+' item'+(cnt!==1?'s':'');updateMobBtn();if(!cart.length){el.innerHTML='<div class="empty-cart"><span>\ud83d\uded2</span><p style="font-size:11px">Tap items to add</p></div>';document.getElementById('discSec').style.display='none';document.getElementById('billTots').style.display='none';return;}el.innerHTML=cart.map((item,i)=>`<div class="o-row"><div style="flex:1;min-width:0"><div class="o-name">${item.name}</div>${item.note?`<span class="o-note-t">\ud83d\udcdd ${item.note}</span>`:''}</div><div class="qty-c"><button class="qb" onclick="chgQty(${i},-1)">\u2212</button><span class="qn">${item.qty}</span><button class="qb" onclick="chgQty(${i},1)">+</button></div><div class="o-total">\u20b9${(item.price*item.qty).toFixed(2)}</div><button class="o-nb" onclick="openNote(${i})">\ud83d\udcac</button><button class="o-del" onclick="delItem(${i})">\u2715</button></div>`).join('');document.getElementById('discSec').style.display='block';document.getElementById('billTots').style.display='block';recalc();}
 
-function sendWhatsApp(){const phone=document.getElementById('custPhone').value.trim();if(!phone||phone.length<10){toast('Enter customer phone number','err');return;}if(!cart.length){toast('Add items first','err');return;}const d=buildSnap();let msg=`*${shop.name}* \u2014 ${shop.tagline}\n${shop.address}\n\n*Invoice #${d.invNo}*\nDate: ${d.date} | Time: ${d.time}\n\n*Items:*\n`;d.cart.forEach(i=>{msg+=`\u2022 ${i.name} \u00d7${i.qty} = \u20b9${(i.price*i.qty).toFixed(2)}\n`;});msg+=`\nSubtotal: \u20b9${d.subtotal.toFixed(2)}`;if(d.discount>0)msg+=`\nDiscount: -\u20b9${d.discount.toFixed(2)}`;if(d.gst>0)msg+=`\nGST (${d.gstPct}%): \u20b9${d.gst.toFixed(2)}`;msg+=`\n*TOTAL: \u20b9${d.total.toFixed(2)}*\nPayment: ${d.payMethod}`;if(d.notes)msg+=`\nNote: ${d.notes}`;msg+=`\n\n_${shop.footer}_`;const url=`https://wa.me/91${phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;window.open(url,'_blank');}
+function sendWhatsApp(){
+  const phone=document.getElementById('custPhone').value.trim();
+  if(!phone||phone.length<10){toast('Enter customer phone number','err');return;}
+  if(!cart.length){toast('Add items first','err');return;}
+  const d=buildSnap();
+  const SEP='\u2501'.repeat(30);
+  const custName=d.custName?'\n\ud83d\udc64 *'+d.custName+'*':'';
 
+  // Item lines with rate
+  const itemLines=d.cart.map(i=>{
+    const name=(i.name+'                    ').substring(0,20);
+    return '  '+String(i.qty).padStart(2)+'x '+name+' \u20b9'+(i.price*i.qty).toFixed(0);
+  }).join('\n');
+
+  // Loyalty section
+  let loyaltyTxt='';
+  const lc=loyaltyDb.find(function(c){return c.phone===phone;});
+  if(lc){
+    const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
+    const redeemVal=Math.floor(lc.points/shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);
+    loyaltyTxt='\n'+SEP
+      +'\n\ud83c\udf1f *LOYALTY REWARDS*'
+      +'\n  Earned: *+'+ptsEarned+' pts*'
+      +'\n  Balance: *'+lc.points+' pts*'
+      +(redeemVal>0?'\n  Redeem next visit: *\u20b9'+redeemVal.toFixed(0)+'*':'')
+      +'\n'+SEP;
+  }
+
+  let msg='\ud83c\udf5b *'+shop.name+'*\n';
+  if(shop.tagline) msg+='\ud83d\udccd '+shop.tagline;
+  if(shop.address) msg+=' | '+shop.address;
+  if(shop.phone)   msg+='\n\ud83d\udcde '+shop.phone;
+  msg+='\n\n'+SEP;
+  msg+='\n\ud83e\uddfe *INVOICE #'+d.invNo+'*';
+  msg+='\n\ud83d\udcc5 '+d.date+'   \ud83d\udd50 '+d.time;
+  msg+='\n\ud83d\udcb3 Payment: *'+d.payMethod+'*';
+  if(d.staffName) msg+='\n\ud83d\udc64 Staff: '+d.staffName;
+  msg+=custName;
+  msg+='\n'+SEP;
+  msg+='\n*ITEMS*\n'+itemLines;
+  msg+='\n'+SEP;
+  msg+='\n  Subtotal:   \u20b9'+d.subtotal.toFixed(0);
+  if(d.discount>0) msg+='\n  Discount:  -\u20b9'+d.discount.toFixed(0);
+  if(d.loyaltyRedeem>0) msg+='\n  \ud83c\udf81 Redeemed: -\u20b9'+d.loyaltyRedeem.toFixed(0);
+  if(d.gst>0) msg+='\n  GST ('+d.gstPct+'%): \u20b9'+d.gst.toFixed(0);
+  msg+='\n'+SEP;
+  msg+='\n\u2705 *TOTAL: \u20b9'+d.total.toFixed(0)+'*';
+  msg+='\n'+SEP;
+  msg+=loyaltyTxt;
+  msg+='\n\ud83d\udce6 PARCEL / TAKEAWAY';
+  if(d.notes) msg+='\n\ud83d\udcdd Note: '+d.notes;
+  msg+='\n\n_'+(shop.footer||'Thank you for choosing '+shop.name+'!')+'_';
+
+  const url='https://wa.me/91'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
 function buildSnap(){const now=new Date();return{invNo,date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'}),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}),custName:document.getElementById('custName').value||'',custPhone:document.getElementById('custPhone').value||'',notes:document.getElementById('ordNotes').value||'',cart:cart.map(function(c){return Object.assign({},c);}),subtotal:getSub(),discount:getDisc(),loyaltyRedeem:loyaltyRedeemAmt,gst:getGst(),gstPct:parseFloat((document.getElementById('gstPct')?document.getElementById('gstPct').value:0))||0,gstEnabled:(document.getElementById('gstChk')?document.getElementById('gstChk').checked:false)||false,total:getTotal(),payMethod,discType,discVal:parseFloat((document.getElementById('discVal')?document.getElementById('discVal').value:0))||0,savedAt:Date.now(),staffId:currentStaff.id,staffName:currentStaff.name,status:'pending'};}
 
 var lastPrintSnap=null;
-function doPrint(type){if(!cart.length){toast('Add items first!','err');return;}if(!lastPrintSnap){const d=buildSnap();d.cart.forEach(ci=>{const mi=menuItems.find(m=>m.id===ci.id);if(mi)mi.stock=Math.max(0,mi.stock-ci.qty);});orders.unshift(d);if(cashRegister.open){cashRegister.entries.push({time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),type:'Sale',method:d.payMethod,amount:d.total,inv:'#'+d.invNo});}const phone=document.getElementById('custPhone').value.trim();if(phone&&phone.length>=10){let lc=loyaltyDb.find(c=>c.phone===phone);const ptsEarned=Math.floor(d.total/shop.loyaltyRate);if(lc){lc.points=Math.max(0,(lc.points-Math.floor(loyaltyRedeemAmt*shop.loyaltyRate))+ptsEarned);lc.visits++;lc.name=document.getElementById('custName').value||lc.name;}else{loyaltyDb.push({id:'lc'+Date.now(),name:document.getElementById('custName').value||'Customer',phone,points:ptsEarned,visits:1});}}invNo++;saveAll();tick();syncAfterOrder(d);sendKOT(d);loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;document.getElementById('loyaltyBar').style.display='none';document.getElementById('loyRow').style.display='none';lastPrintSnap=d;renderMenuGrid();}const d=lastPrintSnap;const slips={customer:custSlip(d),kitchen:chefSlip(d),packing:packSlip(d)};document.getElementById('slipsWrap').innerHTML=type==='all'?slips.customer+slips.kitchen+slips.packing:slips[type];document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
+function doPrint(type){if(!cart.length){toast('Add items first!','err');return;}if(!lastPrintSnap){const d=buildSnap();d.cart.forEach(ci=>{const mi=menuItems.find(m=>m.id===ci.id);if(mi)mi.stock=Math.max(0,mi.stock-ci.qty);});orders.unshift(d);if(cashRegister.open){cashRegister.entries.push({time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),type:'Sale',method:d.payMethod,amount:d.total,inv:'#'+d.invNo});}const phone=document.getElementById('custPhone').value.trim();if(phone&&phone.length>=10){let lc=loyaltyDb.find(c=>c.phone===phone);const ptsEarned=Math.floor(d.total/shop.loyaltyRate);if(lc){lc.points=Math.max(0,(lc.points-Math.floor(loyaltyRedeemAmt*shop.loyaltyRate))+ptsEarned);lc.visits++;lc.name=document.getElementById('custName').value||lc.name;}else{loyaltyDb.push({id:'lc'+Date.now(),name:document.getElementById('custName').value||'Customer',phone,points:ptsEarned,visits:1});}}invNo++;saveAll();tick();syncAfterOrder(d);sendKOT(d);loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;document.getElementById('loyaltyBar').style.display='none';document.getElementById('loyRow').style.display='none';lastPrintSnap=d;renderMenuGrid();}const d=lastPrintSnap;const slips={customer:custSlip(d),kitchen:chefSlip(d)};document.getElementById('slipsWrap').innerHTML=type==='all'?slips.customer+slips.kitchen:slips[type];document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 function closePrint(){document.getElementById('printModal').classList.remove('show');if(lastPrintSnap){setTimeout(()=>{if(confirm('\u2705 Order #'+lastPrintSnap.invNo+' printed!\n\nStart a new order?')){lastPrintSnap=null;newOrder();}},200);}}
 
 function custSlip(d){const rows=d.cart.map(i=>`<tr><td>${i.name}${i.note?`<br><i style="font-size:8px;color:#777">${i.note}</i>`:''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">\u20b9${i.price}</td><td style="text-align:right">\u20b9${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');return`<div class="rcpt"><div class="rl cust">Customer Receipt</div><div class="rb"><h2>${shop.name}</h2><p>${shop.tagline}<br>${shop.address}${shop.phone?'<br>'+shop.phone:''}</p></div><hr><div class="rmeta"><span>Inv: <b>#${d.invNo}</b></span><span>Date: ${d.date}</span><span>Time: ${d.time}</span><span>Pay: ${d.payMethod}</span><span>Staff: ${d.staffName||'\u2014'}</span>${d.custName?`<span style="grid-column:span 2">Name: ${d.custName}</span>`:''}${d.custPhone?`<span style="grid-column:span 2">Ph: ${d.custPhone}</span>`:''}</div><hr><table><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amt</th></tr>${rows}</table><hr><table><tr><td>Subtotal</td><td style="text-align:right">\u20b9${d.subtotal.toFixed(2)}</td></tr>${d.discount>0?`<tr><td>Discount${d.discType==='pct'?` (${d.discVal}%)`:''}</td><td style="text-align:right;color:green">-\u20b9${d.discount.toFixed(2)}</td></tr>`:''}${d.loyaltyRedeem>0?`<tr><td>\ud83c\udf81 Points Redeem</td><td style="text-align:right;color:purple">-\u20b9${d.loyaltyRedeem.toFixed(2)}</td></tr>`:''}${d.gst>0?`<tr><td>GST (${d.gstPct}%)</td><td style="text-align:right">\u20b9${d.gst.toFixed(2)}</td></tr>`:''}<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9${d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="text-align:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="rfoot">PARCEL / TAKEAWAY<br>${shop.footer}</div></div>`;}
 function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 Kitchen Copy</div><div class="rb"><h2>${shop.name}</h2></div><hr><div class="rmeta"><span>Token: <b>#${d.invNo}</b></span><span>Time: <b>${d.time}</b></span></div><hr>${d.cart.map(i=>`<div style="border-bottom:1px dashed #ccc;padding:4px 0"><div class="item-b">${i.name}</div><div class="item-qr">QTY: ${i.qty}</div>${i.note?`<div style="font-size:9px;color:#8B0000;font-weight:700">\u26a0\ufe0f ${i.note}</div>`:''}</div>`).join('')}${d.notes?`<div class="rnote">\u26a0\ufe0f ${d.notes}</div>`:''}<hr><div style="text-align:center;font-size:10px">TAKEAWAY \u00b7 PARCEL</div></div>`;}
-function packSlip(d){return`<div class="rcpt"><div class="rl pack">\ud83d\udce6 Packing Copy</div><div class="rb"><h2>${shop.name}</h2></div><hr><div class="rmeta"><span>Token: <b>#${d.invNo}</b></span><span>${d.time}</span>${d.custName?`<span style="grid-column:span 2">${d.custName}</span>`:''}</div><hr><table><tr><th>Item</th><th style="text-align:center">Qty</th></tr>${d.cart.map(i=>`<tr><td><b>${i.name}</b>${i.note?`<br><i style="font-size:8px">${i.note}</i>`:''}</td><td style="text-align:center;font-size:14px;font-weight:700">${i.qty}</td></tr>`).join('')}</table>${d.notes?`<div class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="chklist">\u2610 All items packed<br>\u2610 Raita/extras included<br>\u2610 Sealed &amp; labelled<br>\u2610 Customer verified</div><hr><div style="text-align:center;font-size:10px;font-weight:700">Total Qty: ${d.cart.reduce((s,i)=>s+i.qty,0)}</div></div>`;}
 
 function newOrder(){if(cart.length&&!confirm('Clear order?'))return;lastPrintSnap=null;cart=[];loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;['custName','custPhone','ordNotes','tendAmt','splitCash','splitUpi','splitCard'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('discVal').value='0';document.getElementById('gstChk').checked=false;document.querySelectorAll('.pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
 
@@ -874,10 +912,10 @@ function renderTokens(){const grid=document.getElementById('tokenGrid');let list
 function filterTokens(f,btn){tokenFilter=f;document.querySelectorAll('#tokenScrn .xs-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTokens();}
 function advanceToken(displayIdx,status){let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new Date(o.savedAt)>Date.now()-3600000*8));if(tokenFilter!=='all')list=list.filter(o=>o.status===tokenFilter);const o=list[displayIdx];if(!o)return;const realIdx=orders.indexOf(o);if(realIdx>=0)orders[realIdx].status=status;saveAll();renderTokens();toast('Token #'+o.invNo+' \u2192 '+status,'ok');}
 function clearDelivered(){orders.forEach(o=>{if(o.status==='delivered')o.status='archived';});saveAll();renderTokens();}
-function reprintToken(displayIdx){let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new Date(o.savedAt)>Date.now()-3600000*8));const o=list[displayIdx];if(!o)return;document.getElementById('slipsWrap').innerHTML=chefSlip(o)+packSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
+function reprintToken(displayIdx){let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&new Date(o.savedAt)>Date.now()-3600000*8));const o=list[displayIdx];if(!o)return;document.getElementById('slipsWrap').innerHTML=chefSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 
 function renderOrders(){const q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}`.toLowerCase().includes(q)));const today=new Date().toDateString();const tO=orders.filter(o=>new Date(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9${orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map((o,i)=>{const st=o.status||'pending';const stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};return`<div class="oc"><div class="oc-hd"><span class="oc-inv">INV #${o.invNo}</span><span style="font-size:9px;color:${stColor[st]};font-weight:700">${st.toUpperCase()}</span><span class="oc-tm">${new Date(o.savedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>${o.custName?`<div style="font-size:10px;margin-bottom:3px">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''} ${o.staffName?'\u00b7 \ud83d\udc64'+o.staffName:''}</div>`:''}<div class="oc-items">${o.cart.map(c=>c.name+' \u00d7'+c.qty).join(', ')}</div><div class="oc-tot">\u20b9${o.total.toFixed(2)}</div><div class="oc-pay">${o.payMethod}${o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):''}</div><div class="oc-acts"><button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprint(${i})">\ud83d\udda8 Print</button><button class="btn-d" onclick="delOrder(${i})">\u2715</button></div></div>`;}).join('')||'<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';}
-function reprint(i){const o=orders[i];document.getElementById('slipsWrap').innerHTML=custSlip(o)+chefSlip(o)+packSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
+function reprint(i){const o=orders[i];document.getElementById('slipsWrap').innerHTML=custSlip(o)+chefSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 function delOrder(i){if(!confirm('Delete?'))return;orders.splice(i,1);S.s('orders',orders);renderOrders();}
 function clearHistory(){if(!confirm('Delete ALL history?'))return;orders=[];S.s('orders',orders);renderOrders();}
 
@@ -922,11 +960,183 @@ function renderCatAdm(){document.getElementById('admBody').innerHTML=`<div style
 function addCat(){const nm=document.getElementById('cNm').value.trim();const em=document.getElementById('cEm').value.trim()||'\ud83c\udf7d';if(!nm){toast('Enter name','err');return;}cats.push({id:'c'+Date.now(),name:nm,emoji:em});saveAll();renderCatAdm();renderCatTabs();document.getElementById('cNm').value='';toast('Added!');}
 function editCat(i){const c=cats[i];const nm=prompt('Name:',c.name);if(!nm)return;const em=prompt('Emoji:',c.emoji)||c.emoji;cats[i]=Object.assign({},c,{name:nm.trim(),emoji:em});saveAll();renderCatAdm();renderCatTabs();renderMenuGrid();}
 function delCat(id){const cnt=menuItems.filter(m=>m.catId===id).length;if(cnt&&!confirm(cnt+' items will be uncategorised. Delete?'))return;cats=cats.filter(c=>c.id!==id);saveAll();renderCatAdm();renderCatTabs();}
-function renderItemAdm(){document.getElementById('admBody').innerHTML=`<div class="panel" style="margin-bottom:14px"><div class="panel-hd">Add / Edit Item</div><div class="panel-bd"><input type="hidden" id="eid"><div style="display:grid;grid-template-columns:1fr 1fr 100px 60px 80px;gap:8px;margin-bottom:8px"><div class="fg" style="margin:0"><label>Name</label><input id="iNm" placeholder="Item name"></div><div class="fg" style="margin:0"><label>Category</label><select id="iCat">${cats.map(c=>`<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('')}</select></div><div class="fg" style="margin:0"><label>Price \u20b9</label><input id="iPrc" type="number" placeholder="150"></div><div class="fg" style="margin:0"><label>Emoji</label><input id="iEm" value="\ud83c\udf7d" maxlength="2" style="font-size:16px;text-align:center"></div><div class="fg" style="margin:0"><label>Stock</label><input id="iStk" type="number" placeholder="50" value="50"></div></div><div style="display:flex;gap:7px"><button class="btn-g" style="flex:1" onclick="saveItem()">\ud83d\udcbe Save</button><button class="btn-o" onclick="resetIF()">Clear</button></div></div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Menu (${menuItems.length})<select id="fCat" onchange="renderItemTbl()" style="background:var(--surf);border:1px solid var(--border);border-radius:5px;padding:3px 7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;outline:none"><option value="all">All</option>${cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div><table class="itm-tbl" id="itmTbl"></table></div>`;renderItemTbl();}
-function renderItemTbl(){const f=(document.getElementById('fCat')?document.getElementById('fCat').value:'all')||'all';const items=f==='all'?menuItems:menuItems.filter(i=>i.catId===f);const cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));const t=document.getElementById('itmTbl');if(!t)return;t.innerHTML=`<tr><th>Name</th><th>Cat</th><th>Price</th><th>Stock</th><th>Avail</th><th>Actions</th></tr>`+items.map(item=>`<tr><td>${item.name}</td><td>${cm[item.catId]||'\u2014'}</td><td>\u20b9${item.price}</td><td>${item.stock||0}</td><td><button class="avl-tog ${item.avail?'on':'off'}" onclick="togAvail('${item.id}')">${item.avail?'\u2705':'\u274c'}</button></td><td><div style="display:flex;gap:4px"><button class="btn-e" onclick="loadEdit('${item.id}')">Edit</button><button class="btn-d" onclick="delItem2('${item.id}')">Del</button></div></td></tr>`).join('');}
-function saveItem(){const id=document.getElementById('eid').value;const nm=document.getElementById('iNm').value.trim();const catId=document.getElementById('iCat').value;const price=parseFloat(document.getElementById('iPrc').value)||0;const emoji=document.getElementById('iEm').value.trim()||'\ud83c\udf7d';const stock=parseInt(document.getElementById('iStk').value)||50;if(!nm){toast('Enter name','err');return;}if(!price){toast('Enter price','err');return;}if(id){const i=menuItems.findIndex(x=>x.id===id);if(i>=0)menuItems[i]=Object.assign({},menuItems[i],{name:nm,catId,price,emoji,stock});}else{menuItems.push({id:'m'+Date.now(),name:nm,catId,price,emoji,avail:true,stock,lowAt:Math.floor(stock*0.2)||5});}saveAll();resetIF();renderItemTbl();renderMenuGrid();renderCatTabs();toast('Saved!');}
-function loadEdit(id){const item=menuItems.find(i=>i.id===id);if(!item)return;document.getElementById('eid').value=item.id;document.getElementById('iNm').value=item.name;document.getElementById('iCat').value=item.catId;document.getElementById('iPrc').value=item.price;document.getElementById('iEm').value=item.emoji;document.getElementById('iStk').value=item.stock||0;document.getElementById('admBody').scrollTop=0;}
-function resetIF(){['eid','iNm','iPrc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const em=document.getElementById('iEm');if(em)em.value='\ud83c\udf7d';const stk=document.getElementById('iStk');if(stk)stk.value='50';}
+function renderItemAdm(){document.getElementById('admBody').innerHTML=`
+<div class="panel" style="margin-bottom:14px">
+  <div class="panel-hd">Add / Edit Item</div>
+  <div class="panel-bd">
+    <input type="hidden" id="eid">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div class="fg" style="margin:0"><label>Item Name</label><input id="iNm" placeholder="e.g. Chicken Biryani"></div>
+      <div class="fg" style="margin:0"><label>Category</label><select id="iCat">${cats.map(c=>`<option value="${c.id}">${c.emoji||''} ${c.name}</option>`).join('')}</select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:100px 60px 80px;gap:8px;margin-bottom:10px">
+      <div class="fg" style="margin:0"><label>Price \u20b9</label><input id="iPrc" type="number" placeholder="150" min="0"></div>
+      <div class="fg" style="margin:0"><label>Emoji</label><input id="iEm" value="\ud83c\udf7d" maxlength="2" style="font-size:16px;text-align:center"></div>
+      <div class="fg" style="margin:0"><label>Stock</label><input id="iStk" type="number" placeholder="50" value="50" min="0"></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>\ud83d\uddbc\ufe0f Item Image (optional &bull; replaces emoji on menu)</label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">
+        <div id="imgPreviewWrap" style="width:72px;height:72px;border-radius:9px;border:1px solid var(--border);background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;flex-shrink:0">
+          <span id="imgPreviewEmoji">\ud83c\udf7d</span>
+          <img id="imgPreviewImg" style="display:none;width:100%;height:100%;object-fit:cover" src="">
+        </div>
+        <div style="flex:1;min-width:150px">
+          <input type="file" id="iImgFile" accept="image/*" style="display:none" onchange="handleItemImgUpload(this)">
+          <button class="btn-o" style="width:100%;margin-bottom:5px" onclick="document.getElementById('iImgFile').click()">\ud83d\udcf8 Upload Image</button>
+          <button class="btn-d" style="width:100%;font-size:9px" onclick="clearItemImg()">\u2715 Remove Image</button>
+        </div>
+      </div>
+      <input type="hidden" id="iImgData">
+      <div style="font-size:9px;color:var(--muted);margin-top:5px">Square image works best &bull; JPG/PNG &bull; auto-resized &bull; shows on menu grid</div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button class="btn-g" style="flex:1" onclick="saveItem()">\ud83d\udcbe Save Item</button>
+      <button class="btn-o" onclick="resetIF()">Clear</button>
+    </div>
+  </div>
+</div>
+<div class="panel" style="overflow-x:auto">
+  <div class="panel-hd">
+    Menu (${menuItems.length} items)
+    <select id="fCat" onchange="renderItemTbl()" style="background:var(--surf);border:1px solid var(--border);border-radius:5px;padding:3px 7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;outline:none">
+      <option value="all">All Categories</option>
+      ${cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+    </select>
+  </div>
+  <table class="itm-tbl" id="itmTbl"></table>
+</div>`;renderItemTbl();}
+function renderItemTbl(){
+  const f=(document.getElementById('fCat')?document.getElementById('fCat').value:'all')||'all';
+  const items=f==='all'?menuItems:menuItems.filter(i=>i.catId===f);
+  const cm=Object.fromEntries(cats.map(c=>[c.id,c.name]));
+  const t=document.getElementById('itmTbl');if(!t)return;
+  if(!items.length){
+    t.innerHTML='<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted)">No items yet. Add your first item above.</td></tr>';
+    return;
+  }
+  t.innerHTML=`<tr>
+    <th style="width:50px">Image</th>
+    <th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Avail</th><th>Actions</th>
+  </tr>`+items.map(item=>`<tr>
+    <td>
+      ${item.image
+        ? `<img src="${item.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
+        : `<span style="font-size:22px">${item.emoji||'\ud83c\udf7d'}</span>`}
+    </td>
+    <td style="font-weight:600">${item.name}</td>
+    <td style="font-size:10px;color:var(--muted)">${cm[item.catId]||'\u2014'}</td>
+    <td>\u20b9${item.price}</td>
+    <td>${item.stock||0}</td>
+    <td><button class="avl-tog ${item.avail?'on':'off'}" onclick="togAvail('${item.id}')">${item.avail?'\u2705':'\u274c'}</button></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn-e" onclick="loadEdit('${item.id}')">Edit</button>
+        <button class="btn-d" onclick="delItem2('${item.id}')">Del</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function saveItem(){
+  const id=document.getElementById('eid').value;
+  const nm=document.getElementById('iNm').value.trim();
+  const catId=document.getElementById('iCat').value;
+  const price=parseFloat(document.getElementById('iPrc').value)||0;
+  const emoji=document.getElementById('iEm').value.trim()||'\ud83c\udf7d';
+  const stock=parseInt(document.getElementById('iStk').value)||50;
+  const imgData=document.getElementById('iImgData').value||'';
+  if(!nm){toast('Enter item name','err');return;}
+  if(!price){toast('Enter price','err');return;}
+  if(!catId){toast('Add a category first!','err');return;}
+  if(id){
+    const i=menuItems.findIndex(x=>x.id===id);
+    if(i>=0){
+      menuItems[i]=Object.assign({},menuItems[i],{name:nm,catId,price,emoji,stock});
+      if(imgData) menuItems[i].image=imgData;
+      else if(!imgData&&document.getElementById('iImgData').dataset.cleared) delete menuItems[i].image;
+    }
+  }else{
+    const newItem={id:'m'+Date.now(),name:nm,catId,price,emoji,avail:true,stock,lowAt:Math.floor(stock*0.2)||5};
+    if(imgData) newItem.image=imgData;
+    menuItems.push(newItem);
+  }
+  saveAll();resetIF();renderItemTbl();renderMenuGrid();renderCatTabs();
+  toast('Item saved! \u2705','ok');
+}
+function loadEdit(id){
+  const item=menuItems.find(i=>i.id===id);if(!item)return;
+  document.getElementById('eid').value=item.id;
+  document.getElementById('iNm').value=item.name;
+  if(item.catId)document.getElementById('iCat').value=item.catId;
+  document.getElementById('iPrc').value=item.price;
+  document.getElementById('iEm').value=item.emoji||'\ud83c\udf7d';
+  document.getElementById('iStk').value=item.stock||0;
+  document.getElementById('iImgData').value=item.image||'';
+  document.getElementById('iImgData').dataset.cleared='';
+  const emoji=document.getElementById('imgPreviewEmoji');
+  const img=document.getElementById('imgPreviewImg');
+  if(item.image){
+    emoji.style.display='none';
+    img.src=item.image;img.style.display='block';
+  }else{
+    emoji.style.display='block';
+    emoji.textContent=item.emoji||'\ud83c\udf7d';
+    img.style.display='none';img.src='';
+  }
+  document.getElementById('admBody').scrollTop=0;
+  toast('Editing: '+item.name);
+}
+function handleItemImgUpload(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>500000){toast('Image too large! Use under 500KB','err');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const raw=e.target.result;
+    // Resize to max 400px using canvas
+    const img=new Image();
+    img.onload=function(){
+      const maxSize=400;
+      const scale=Math.min(1,maxSize/Math.max(img.width,img.height));
+      const w=Math.round(img.width*scale);
+      const h=Math.round(img.height*scale);
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',0.75);
+      document.getElementById('iImgData').value=data;
+      const prev=document.getElementById('imgPreviewImg');
+      const emo=document.getElementById('imgPreviewEmoji');
+      prev.src=data;prev.style.display='block';
+      emo.style.display='none';
+      toast('Image ready! Save to apply.','ok');
+    };
+    img.src=raw;
+  };
+  reader.readAsDataURL(file);
+}
+function clearItemImg(){
+  document.getElementById('iImgData').value='';
+  document.getElementById('iImgData').dataset.cleared='yes';
+  const img=document.getElementById('imgPreviewImg');
+  if(img){img.style.display='none';img.src='';}
+  const ej=document.getElementById('imgPreviewEmoji');
+  if(ej)ej.style.display='block';
+  const fi=document.getElementById('iImgFile');
+  if(fi)fi.value='';
+  toast('Image removed');
+}
+function resetIF(){
+  ['eid','iNm','iPrc','iImgData'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';if(e.dataset)e.dataset.cleared='';}});
+  const em=document.getElementById('iEm');if(em)em.value='\ud83c\udf7d';
+  const stk=document.getElementById('iStk');if(stk)stk.value='50';
+  const img=document.getElementById('imgPreviewImg');
+  if(img){img.style.display='none';img.src='';}
+  const ej=document.getElementById('imgPreviewEmoji');
+  if(ej){ej.style.display='block';ej.textContent='\ud83c\udf7d';}
+  const fileInp=document.getElementById('iImgFile');
+  if(fileInp)fileInp.value='';
+}
 function togAvail(id){const i=menuItems.find(x=>x.id===id);if(i){i.avail=!i.avail;saveAll();renderItemTbl();renderMenuGrid();}}
 function delItem2(id){if(!confirm('Delete?'))return;menuItems=menuItems.filter(i=>i.id!==id);saveAll();renderItemTbl();renderMenuGrid();}
 function renderLoyaltyAdm(){const body=document.getElementById('admBody');body.innerHTML=`<div class="panel" style="max-width:400px;margin-bottom:14px"><div class="panel-hd">\ud83c\udf81 Loyalty Settings</div><div class="panel-bd"><div class="fg"><label>Earn 1 Point per \u20b9</label><input id="lRate" type="number" value="${shop.loyaltyRate}" min="1"></div><div class="fg"><label>Points needed to redeem \u20b91</label><input id="lRedeem" type="number" value="${shop.loyaltyRedeemPer}" min="1"></div><button class="btn-g" onclick="saveLoyaltySettings()">\ud83d\udcbe Save</button></div></div><div class="panel"><div class="panel-hd">\ud83d\udc65 Loyalty Members (${loyaltyDb.length})<button class="btn-o" onclick="exportLoyaltyCsv()">\u2b07 CSV</button></div><div class="loyalty-customers">${loyaltyDb.sort((a,b)=>b.points-a.points).map(c=>`<div class="lc-card"><div class="lc-name">${c.name}</div><div class="lc-phone">\ud83d\udcde ${c.phone}</div><div class="lc-pts">${c.points}<span style="font-size:11px;font-weight:400"> pts</span></div><div class="lc-visits">\ud83d\uded2 ${c.visits} visits</div><div style="display:flex;gap:5px;margin-top:7px"><button class="btn-o" style="font-size:9px" onclick="editLoyaltyPts('${c.id}')">Edit Points</button><button class="btn-d" onclick="delLoyalty('${c.id}')">Del</button></div></div>`).join('')||'<div style="padding:20px;color:var(--muted);font-size:11px">No loyalty members yet</div>'}</div></div>`;}
@@ -934,8 +1144,106 @@ function saveLoyaltySettings(){shop.loyaltyRate=parseInt(document.getElementById
 function editLoyaltyPts(id){const c=loyaltyDb.find(x=>x.id===id);if(!c)return;const v=parseInt(prompt('Set points for '+c.name+':',c.points));if(isNaN(v))return;c.points=v;saveAll();renderLoyaltyAdm();toast('Updated!');}
 function delLoyalty(id){if(!confirm('Delete loyalty record?'))return;loyaltyDb=loyaltyDb.filter(x=>x.id!==id);saveAll();renderLoyaltyAdm();}
 function exportLoyaltyCsv(){let c='Name,Phone,Points,Visits\n';loyaltyDb.forEach(x=>c+=`"${x.name}","${x.phone}",${x.points},${x.visits}\n`);dlCsv(c,'dawat_loyalty.csv');}
-function renderSettings(){document.getElementById('admBody').innerHTML=`<div class="panel" style="max-width:480px"><div class="panel-hd">\ud83c\udfe2 Shop Settings</div><div class="panel-bd"><div class="fg"><label>Shop Name</label><input id="sNm" value="${shop.name}"></div><div class="fg"><label>Tagline</label><input id="sTg" value="${shop.tagline}"></div><div class="fg"><label>Address</label><input id="sAd" value="${shop.address}"></div><div class="fg"><label>Phone</label><input id="sPh" value="${shop.phone}" type="tel"></div><div class="fg"><label>Receipt Footer</label><textarea id="sFt">${shop.footer}</textarea></div><div class="fg"><label>Admin PIN (4 digits)</label><input id="sPin" type="password" maxlength="4" value="${shop.adminPin}" placeholder="4-digit PIN"></div><button class="btn-g" onclick="saveSettings()">\ud83d\udcbe Save Settings</button></div></div><div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udd10 Login Credentials</div><div class="panel-bd"><div class="fg"><label>New Username</label><input id="newUser" placeholder="Enter new username" value="${S.g('posUser','admin')}"></div><div class="fg"><label>New Password</label><input id="newPass" type="password" placeholder="Enter new password"></div><div class="fg"><label>Confirm Password</label><input id="newPass2" type="password" placeholder="Confirm new password"></div><button class="btn-g" onclick="saveCredentials()">\ud83d\udd10 Update Credentials</button></div></div><div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\u2601\ufe0f Google Sheets Sync</div><div class="panel-bd"><div class="fg"><label>Apps Script Web App URL</label><input id="sheetUrlInput" value="${SHEET_URL.indexOf('YOUR_APPS')!==-1?'':SHEET_URL}" placeholder="https://script.google.com/macros/s/..."></div><div style="display:flex;gap:7px"><button class="btn-g" style="flex:1" onclick="saveSheetUrl()">\ud83d\udcbe Save URL</button><button class="btn-o" onclick="syncAllData()">\u2601\ufe0f Sync Now</button></div></div></div><div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udda8\ufe0f KOT Printer \u2014 KPC307-UEWB</div><div class="panel-bd"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:11px;color:var(--muted)">Status:</span><span id="kotStatus" style="font-size:11px;font-weight:700;color:var(--red)">\ud83d\udd34 Not connected</span></div><div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:8px">\ud83d\udd35 Bluetooth BLE (for mobile)</div><button class="btn-g" style="width:100%" onclick="kotPrinter.connectBluetooth()">\ud83d\udd35 Connect Bluetooth</button></div><div style="background:rgba(74,154,90,.05);border:1px solid rgba(74,154,90,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:8px">\ud83d\udd0c USB / Wired (computer only)</div><button class="btn-o" style="width:100%" onclick="kotPrinter.connectWired()">\ud83d\udd0c Connect USB</button></div><button class="btn-d" style="width:100%" onclick="kotPrinter.disconnect()">\u2715 Disconnect Printer</button><button class="btn-g" style="width:100%;margin-top:7px;background:linear-gradient(135deg,#3A7AC0,#2a5a90)" onclick="testPrint()">\ud83d\udda8\ufe0f Send Test Print</button></div></div><div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udd22 Invoice Number Fix</div><div class="panel-bd"><div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:7px;padding:10px 12px;margin-bottom:12px;font-size:10px;color:var(--muted);line-height:1.6">Current INV #: <strong style="color:var(--gold)">${invNo}</strong></div><div class="fg"><label>Set Invoice Number to</label><input id="fixInvNo" type="number" placeholder="e.g. 1010" value="${invNo}"></div><div style="display:flex;gap:7px"><button class="btn-g" style="flex:1" onclick="fixInvNumber()">\ud83d\udd22 Set Invoice Number</button><button class="btn-o" onclick="recoverInvNo()">\u2601\ufe0f Auto-fix from Sheets</button></div></div></div>`;setTimeout(()=>{kotPrinter.updateStatus();},100);}
-function saveSettings(){shop={...shop,name:document.getElementById('sNm').value||'DAWAT',tagline:document.getElementById('sTg').value||'',address:document.getElementById('sAd').value||'',phone:document.getElementById('sPh').value||'',footer:document.getElementById('sFt').value||'',adminPin:document.getElementById('sPin').value||shop.adminPin};saveAll();toast('Settings saved!','ok');syncAllData();}
+function renderSettings(){document.getElementById('admBody').innerHTML=`<div class="panel" style="max-width:480px"><div class="panel-hd">\ud83c\udfe2 Shop Settings</div><div class="panel-bd">
+<div class="fg"><label>Shop Name</label><input id="sNm" value="${shop.name}"></div>
+<div class="fg"><label>Tagline</label><input id="sTg" value="${shop.tagline}"></div>
+<div class="fg"><label>Address</label><input id="sAd" value="${shop.address}"></div>
+<div class="fg"><label>Phone</label><input id="sPh" value="${shop.phone}" type="tel"></div>
+<div class="fg"><label>Receipt Footer</label><textarea id="sFt">${shop.footer}</textarea></div>
+<div class="fg">
+  <label>\ud83d\uddbc\ufe0f Receipt Logo (PNG/JPG &bull; max 200KB &bull; black &amp; white works best)</label>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0">
+    <img id="logoPrev" src="${shop.logo||''}" style="display:${shop.logo?'block':'none'};width:120px;height:60px;object-fit:contain;border:1px solid var(--border);border-radius:6px;background:#fff;padding:4px">
+    <div style="flex:1;min-width:150px">
+      <input type="hidden" id="sLogo" value="${shop.logo||''}">
+      <input type="file" id="logoFile" accept="image/png,image/jpeg" style="display:none" onchange="handleLogoUpload(this)">
+      <button class="btn-o" style="width:100%;margin-bottom:5px" onclick="document.getElementById('logoFile').click()">\ud83d\udcf8 Upload Logo</button>
+      <button class="btn-d" style="width:100%;font-size:9px" onclick="removeLogo()">\u2715 Remove Logo</button>
+    </div>
+  </div>
+  <div style="font-size:9px;color:var(--muted);line-height:1.6">Best: black &amp; white PNG, max 300px wide, transparent background</div>
+</div>
+<div class="fg"><label>Admin PIN (4 digits)</label><input id="sPin" type="password" maxlength="4" value="${shop.adminPin}" placeholder="4-digit PIN"></div>
+<button class="btn-g" onclick="saveSettings()">\ud83d\udcbe Save Settings</button>
+</div></div>
+<div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udd10 Login Credentials</div><div class="panel-bd">
+<div class="fg"><label>New Username</label><input id="newUser" placeholder="Enter new username" value="${S.g('posUser','admin')}"></div>
+<div class="fg"><label>New Password</label><input id="newPass" type="password" placeholder="Enter new password"></div>
+<div class="fg"><label>Confirm Password</label><input id="newPass2" type="password" placeholder="Confirm new password"></div>
+<button class="btn-g" onclick="saveCredentials()">\ud83d\udd10 Update Credentials</button>
+</div></div>
+<div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\u2601\ufe0f Google Sheets Sync</div><div class="panel-bd">
+<div style="background:rgba(74,154,90,.06);border:1px solid rgba(74,154,90,.3);border-radius:8px;padding:11px 13px;margin-bottom:10px;font-size:10px;line-height:1.7">
+  \u2705 <strong style="color:var(--green);font-size:11px">Google Sheets Connected</strong><br>
+  URL is built into the app &mdash; no setup needed.<br>
+  <span style="font-size:9px;color:var(--muted);word-break:break-all">${SHEET_URL.substring(0,60)}...</span>
+</div>
+<div style="display:flex;gap:7px">
+  <button class="btn-g" style="flex:1" onclick="syncAllData()">\u2601\ufe0f Sync All Data Now</button>
+  <button class="btn-o" onclick="setSyncStatus('idle')">Reset</button>
+</div>
+<div style="margin-top:8px;font-size:10px;color:var(--muted)">Status: <span id="syncStatusTxt">${syncStatus}</span></div></div></div>
+<div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udda8\ufe0f KOT Printer &mdash; KPC307-UEWB</div><div class="panel-bd">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+  <span style="font-size:11px;color:var(--muted)">Status:</span>
+  <span id="kotStatus" style="font-size:11px;font-weight:700;color:var(--red)">\ud83d\udd34 Not connected</span>
+</div>
+<div style="background:rgba(201,168,76,.1);border:2px solid var(--gold);border-radius:9px;padding:12px;margin-bottom:12px;font-size:10px;line-height:1.9;color:var(--text)">
+  <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">\u2b50 Use Bluetooth (Recommended)</div>
+  Printer is already paired as <b>KPC307-UEWB</b>.<br>
+  \u2776 Click <b>Connect Bluetooth</b> below<br>
+  \u2777 Picker opens &rarr; <b>CLICK the printer name</b> to select it<br>
+  \u2778 <b>Connect button activates</b> &rarr; click it<br>
+  <span style="color:var(--orange);font-size:9px">\u26a0\ufe0f USB gives Access Denied on Windows &mdash; use Bluetooth!</span>
+</div>
+<button class="btn-g" style="width:100%;font-size:13px;padding:12px;margin-bottom:10px" onclick="kotPrinter.connectBluetooth()">\ud83d\udd35 Connect Bluetooth</button>
+<div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:8px">
+  <div style="font-size:9px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">USB (needs Zadig WinUSB driver)</div>
+  <button class="btn-o" style="width:100%" onclick="kotPrinter.connectWired()">\ud83d\udd0c Connect USB / Serial</button>
+</div>
+<button class="btn-d" style="width:100%;margin-bottom:6px" onclick="kotPrinter.disconnect()">\u2715 Disconnect Printer</button>
+<button class="btn-g" style="width:100%;background:linear-gradient(135deg,#3A7AC0,#2a5a90)" onclick="testPrint()">\ud83d\udda8\ufe0f Send Test Print</button>
+</div></div>
+<div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udd22 Invoice Number Fix</div><div class="panel-bd">
+<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:7px;padding:10px 12px;margin-bottom:12px;font-size:10px;color:var(--muted);line-height:1.6">Current INV #: <strong style="color:var(--gold)">${invNo}</strong></div>
+<div class="fg"><label>Set Invoice Number to</label><input id="fixInvNo" type="number" placeholder="e.g. 1010" value="${invNo}"></div>
+<div style="display:flex;gap:7px"><button class="btn-g" style="flex:1" onclick="fixInvNumber()">\ud83d\udd22 Set Invoice Number</button><button class="btn-o" onclick="recoverInvNo()">\u2601\ufe0f Auto-fix from Sheets</button></div>
+</div></div>`;
+setTimeout(()=>{kotPrinter.updateStatus();},100);}
+function saveSettings(){
+  const logoInp=document.getElementById('sLogo');
+  const logoData=logoInp&&logoInp.value?logoInp.value:shop.logo||'';
+  shop={...shop,
+    name:document.getElementById('sNm').value||'DAWAT',
+    tagline:document.getElementById('sTg').value||'',
+    address:document.getElementById('sAd').value||'',
+    phone:document.getElementById('sPh').value||'',
+    footer:document.getElementById('sFt').value||'',
+    adminPin:document.getElementById('sPin').value||shop.adminPin,
+    logo:logoData
+  };
+  saveAll();kotPrinter.processLogo();toast('Settings saved!','ok');syncAllData();
+}
+function handleLogoUpload(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>200000){toast('Logo too large! Use image under 200KB','err');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const data=e.target.result;
+    document.getElementById('sLogo').value=data;
+    const prev=document.getElementById('logoPrev');
+    if(prev){prev.src=data;prev.style.display='block';}
+    toast('Logo loaded! Click Save Settings to apply.','ok');
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo(){
+  document.getElementById('sLogo').value='';
+  shop.logo='';saveAll();
+  const prev=document.getElementById('logoPrev');
+  if(prev){prev.src='';prev.style.display='none';}
+  toast('Logo removed');
+}
 function fixInvNumber(){const v=parseInt(document.getElementById('fixInvNo').value)||0;if(v<1){toast('Enter a valid number','err');return;}if(v<=invNo&&!confirm('New number ('+v+') is less than or equal to current ('+invNo+'). Are you sure?'))return;invNo=v;S.s('invNo',invNo);tick();toast('\u2705 Invoice number set to #'+invNo,'ok');}
 function saveCredentials(){const u=document.getElementById('newUser').value.trim();const p=document.getElementById('newPass').value;const p2=document.getElementById('newPass2').value;if(!u){toast('Enter a username','err');return;}if(!p){toast('Enter a password','err');return;}if(p!==p2){toast('Passwords do not match','err');return;}if(p.length<4){toast('Password must be at least 4 characters','err');return;}S.s('posUser',u);S.s('posPass',p);toast('\u2705 Credentials updated! Please log in again.','ok');setTimeout(()=>doLogout(),1500);}
 
@@ -1003,7 +1311,7 @@ var kotPrinter={
       }
       this.device=device;this.characteristic=characteristic;this.type='bluetooth';
       S.s('kotType','bluetooth');
-      toast('\u2705 BT Connected: '+device.name,'ok');
+      toast('\u2705 BT Connected: '+device.name,'ok');kotPrinter.processLogo();
       device.addEventListener('gattserverdisconnected',()=>{
         this.device=null;this.characteristic=null;this.type=null;
         toast('\ud83d\udd35 Printer disconnected','err');
@@ -1018,58 +1326,61 @@ var kotPrinter={
     }
   },
 
-  // ── USB connect — WebUSB (no driver needed) then fallback to Serial ──
+  // ── USB connect — WebUSB (WinUSB driver) with Web Serial fallback ──
   connectWired:async function(){
-    // 1. Try WebUSB first (no Windows driver required)
+    // Try WebUSB first — works after WinUSB driver installed via Zadig
     if(navigator.usb){
       try{
-        toast('\ud83d\udd0c Opening USB picker \u2014 select KPC307-UEWB\u2026');
-        const device=await navigator.usb.requestDevice({filters:[]});
+        toast('\ud83d\udd0c Select KPC307-UEWB from USB picker\u2026');
+        const device = await navigator.usb.requestDevice({filters:[]});
         await device.open();
-        if(device.configuration===null){
-          await device.selectConfiguration(1);
-        }
-        // Claim first available interface
-        let claimed=false;
-        for(let n=0;n<(device.configuration.interfaces.length||1);n++){
-          try{await device.claimInterface(n);claimed=true;console.log('KOT USB: claimed interface',n);break;}
-          catch(e){console.log('KOT USB: interface',n,'failed:',e.message);}
+        if(device.configuration===null) await device.selectConfiguration(1);
+        // Claim first interface
+        let claimed = false;
+        for(let n=0; n<device.configuration.interfaces.length; n++){
+          try{
+            await device.claimInterface(n);
+            claimed = true;
+            console.log('KOT USB: claimed interface',n);
+            break;
+          }catch(e){ console.log('interface',n,'failed:',e.message); }
         }
         if(!claimed){
           await device.close();
-          throw new Error('Cannot claim USB interface');
+          throw new Error('Cannot claim USB interface — try Serial instead');
         }
-        this.device=device;this.type='usb';S.s('kotType','usb');
-        toast('\u2705 USB Connected: '+(device.productName||'KOT Printer'),'ok');
+        this.device = device;
+        this.type = 'usb';
+        S.s('kotType','usb');
+        toast('\u2705 USB Connected: '+(device.productName||'KPC307-UEWB'),'ok');
         this.updateStatus();
         return true;
       }catch(e){
-        if(e.name==='NotFoundError'){return false;}
+        if(e.name==='NotFoundError'){ return false; }
         console.log('WebUSB failed:',e.message);
-        if(e.message&&(e.message.indexOf('Access denied')>=0||e.message.indexOf('access denied')>=0)){
-          toast('\u274c USB blocked by Windows driver. Use Bluetooth instead! (Admin \u2192 Connect Bluetooth)','err');
-          return false;
-        }
-        toast('\u26a0\ufe0f WebUSB: '+e.message,'err');
+        toast('\u26a0\ufe0f WebUSB: '+e.message+' \u2014 trying Serial port...','err');
       }
     }
-    // 2. Web Serial fallback (needs COM port / VCP driver)
+    // Fallback: Web Serial
     if(navigator.serial){
       try{
-        toast('\ud83d\udd0c Select printer COM port\u2026');
-        const port=await navigator.serial.requestPort();
+        toast('\ud83d\udd0c Select printer COM port from list\u2026');
+        const port = await navigator.serial.requestPort();
         await port.open({baudRate:9600});
-        this.device=port;this.type='wired';S.s('kotType','wired');
-        toast('\u2705 Serial port connected!','ok');this.updateStatus();return true;
+        this.device = port;
+        this.type = 'wired';
+        S.s('kotType','wired');
+        toast('\u2705 Serial/COM connected!','ok');
+        this.updateStatus();
+        return true;
       }catch(e){
-        if(e.name!=='NotFoundError')toast('\u274c Serial error: '+e.message,'err');
+        if(e.name!=='NotFoundError') toast('\u274c Serial error: '+e.message,'err');
         return false;
       }
     }
-    toast('\u274c No USB API available. Use Chrome browser.','err');
+    toast('\u274c No USB API. Use Chrome browser.','err');
     return false;
   },
-
   // ── Send ESC/POS data ──
   print:async function(text){
     if(!this.device&&!this.characteristic){
@@ -1089,23 +1400,24 @@ var kotPrinter={
           if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,80));
         }
       }
-      // WebUSB
+      // WebUSB (WinUSB driver via Zadig)
       else if(this.type==='usb'&&this.device){
-        let epNum=1;
+        let epNum = 1;
         try{
-          const iface=this.device.configuration.interfaces[0];
-          const ep=iface.alternate.endpoints.find(function(e){return e.direction==='out'&&e.type==='bulk';});
-          if(ep)epNum=ep.endpointNumber;
+          const iface = this.device.configuration.interfaces[0];
+          const ep = iface.alternate.endpoints.find(e=>e.direction==='out'&&e.type==='bulk');
+          if(ep) epNum = ep.endpointNumber;
+          console.log('KOT USB: using endpoint',epNum);
         }catch(e){}
-        const usbChunk=512;
-        for(let i=0;i<bytes.length;i+=usbChunk){
-          await this.device.transferOut(epNum,bytes.slice(i,i+usbChunk));
-          if(i+usbChunk<bytes.length)await new Promise(r=>setTimeout(r,20));
+        const usbChunk = 64;
+        for(let i=0; i<bytes.length; i+=usbChunk){
+          await this.device.transferOut(epNum, bytes.slice(i, i+usbChunk));
+          if(i+usbChunk < bytes.length) await new Promise(r=>setTimeout(r,10));
         }
       }
-      // Web Serial
+      // Web Serial / COM port
       else if(this.type==='wired'&&this.device){
-        const writer=this.device.writable.getWriter();
+        const writer = this.device.writable.getWriter();
         await writer.write(bytes);
         writer.releaseLock();
       }
@@ -1118,24 +1430,112 @@ var kotPrinter={
   },
 
   // ── ESC/POS byte builder ──
-  textToBytes:function(text){
+  textToBytes:function(text,isLogo){
     const ESC=0x1B,GS=0x1D;
-    const init=[ESC,0x40];
-    const cut=[GS,0x56,0x41,0x05];
-    const feed=[ESC,0x64,0x04];
-    const center=[ESC,0x61,0x01],left=[ESC,0x61,0x00];
-    const bold_on=[ESC,0x45,0x01],bold_off=[ESC,0x45,0x00];
-    const dbl_h=[GS,0x21,0x01],normal=[GS,0x21,0x00];
-    const SEP='==========================================\n';
-    let bytes=[...init];
-    bytes.push(...center,...bold_on,...dbl_h);
-    bytes.push(...this.encode(shop.name+'\n'));
-    bytes.push(...normal,...bold_off,...left);
-    bytes.push(...this.encode(SEP));
-    bytes.push(...bold_on,...this.encode(text),...bold_off);
-    bytes.push(...this.encode(SEP));
+    const init    = [ESC,0x40];
+    const cut     = [GS,0x56,0x41,0x05];
+    const feed    = [ESC,0x64,0x03];
+    const center  = [ESC,0x61,0x01];
+    const left    = [ESC,0x61,0x00];
+    const bold_on = [ESC,0x45,0x01];
+    const bold_off= [ESC,0x45,0x00];
+    const dbl_hw  = [GS,0x21,0x11]; // double height + width
+    const dbl_h   = [GS,0x21,0x01]; // double height only
+    const normal  = [GS,0x21,0x00];
+    const fontA   = [ESC,0x4D,0x00]; // Font A - bigger, cleaner
+    let bytes=[...init,...fontA];
+    // Logo if available
+    if(shop.logo&&isLogo!==false){
+      try{
+        const logoBytes=this.logoToBytes(shop.logo);
+        if(logoBytes&&logoBytes.length>0){
+          bytes.push(...center);
+          bytes.push(...logoBytes);
+          bytes.push(...this.encode('\n'));
+        }else{
+          // Fallback to text header
+          bytes.push(...center,...bold_on,...dbl_hw);
+          bytes.push(...this.encode(shop.name+'\n'));
+          bytes.push(...normal,...bold_off);
+        }
+      }catch(e){
+        bytes.push(...center,...bold_on,...dbl_hw);
+        bytes.push(...this.encode(shop.name+'\n'));
+        bytes.push(...normal,...bold_off);
+      }
+    }else{
+      bytes.push(...center,...bold_on,...dbl_hw);
+      bytes.push(...this.encode(shop.name+'\n'));
+      bytes.push(...normal,...bold_off);
+    }
+    bytes.push(...left,...this.encode(text));
     bytes.push(...feed,...cut);
     return new Uint8Array(bytes);
+  },
+
+  // Convert logo PNG/JPG to ESC/POS bitmap bytes using canvas
+  logoToBytes:function(dataUrl){
+    try{
+      const canvas=document.createElement('canvas');
+      const ctx=canvas.getContext('2d');
+      const img=new Image();
+      // Synchronous-style via pre-loaded image
+      // We use a cached version stored at connection time
+      if(!this._logoBytes)return [];
+      return this._logoBytes;
+    }catch(e){return [];}
+  },
+
+  // Call this after logo is set to pre-process it
+  processLogo:function(callback){
+    if(!shop.logo){this._logoBytes=[];if(callback)callback();return;}
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const maxW=384; // 80mm paper = 384 dots at 48dpi
+        const scale=Math.min(1,maxW/img.width);
+        const w=Math.floor(img.width*scale);
+        const h=Math.floor(img.height*scale);
+        // Width must be multiple of 8
+        const wBytes=Math.ceil(w/8);
+        const wPrint=wBytes*8;
+        const canvas=document.createElement('canvas');
+        canvas.width=wPrint;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,wPrint,h);
+        ctx.drawImage(img,0,0,w,h);
+        const px=ctx.getImageData(0,0,wPrint,h).data;
+        // Build GS v 0 bitmap command
+        const GS=0x1D;
+        const xL=wBytes&0xFF,xH=(wBytes>>8)&0xFF;
+        const yL=h&0xFF,yH=(h>>8)&0xFF;
+        const cmd=[GS,0x76,0x30,0x00,xL,xH,yL,yH];
+        // Center command
+        const ESC=0x1B;
+        const centerCmd=[ESC,0x61,0x01];
+        const result=[...centerCmd,...cmd];
+        for(let row=0;row<h;row++){
+          for(let byteIdx=0;byteIdx<wBytes;byteIdx++){
+            let byte=0;
+            for(let bit=0;bit<8;bit++){
+              const x=byteIdx*8+bit;
+              const i=(row*wPrint+x)*4;
+              const r=px[i],g=px[i+1],b=px[i+2];
+              const bright=(r*299+g*587+b*114)/1000;
+              if(bright<128)byte|=(0x80>>bit); // dark pixel = 1
+            }
+            result.push(byte);
+          }
+        }
+        result.push(ESC,0x61,0x00); // left align after logo
+        this._logoBytes=result;
+        console.log('Logo processed:',wPrint+'x'+h,'bytes:',result.length);
+      }catch(e){console.log('Logo error:',e);this._logoBytes=[];}
+      if(callback)callback();
+    };
+    img.onerror=()=>{this._logoBytes=[];if(callback)callback();};
+    img.src=shop.logo;
   },
 
   encode:function(str){
@@ -1180,43 +1580,90 @@ var kotPrinter={
 // ── sendKOT: prints Customer Receipt + Kitchen KOT after every order ──
 async function sendKOT(d){
   const SEP='------------------------------------------\n';
+  const W=42; // print width chars for 80mm Font A
 
-  // SLIP 1: Customer Receipt with prices & total
+  function pad(str,n){return (str+'').padEnd(n).substring(0,n);}
+  function rpad(str,n){return (str+'').padStart(n).substring(0,n);}
+
+  // ── SLIP 1: Customer Receipt ──
+  const header='  Item                 Rate    Amount';
+  const divider='-'.repeat(W);
   const custLines=d.cart.map(i=>{
-    const nm=(i.name+'                  ').substring(0,18);
-    return'  '+String(i.qty).padStart(2)+'x '+nm+' Rs.'+(i.price*i.qty).toFixed(0);
+    const nm=pad(i.qty+'x '+i.name,22);
+    const rate=rpad('Rs.'+i.price,7);
+    const amt=rpad('Rs.'+(i.price*i.qty).toFixed(0),8);
+    return nm+' '+rate+' '+amt;
   }).join('\n');
+
   const custText=[
-    'CUSTOMER RECEIPT',SEP,
-    'Inv:#'+d.invNo+'  '+d.date+'  '+d.time,
-    'Pay: '+d.payMethod+(d.staffName?'  Staff: '+d.staffName:''),
-    d.custName?'Name: '+d.custName:'',
-    d.custPhone?'Ph:   '+d.custPhone:'',
-    SEP,custLines,SEP,
-    'Subtotal:        Rs.'+d.subtotal.toFixed(0),
-    d.discount>0?'Discount:       -Rs.'+d.discount.toFixed(0):'',
-    d.gst>0?'GST:             Rs.'+d.gst.toFixed(0):'',
-    '** TOTAL:        Rs.'+d.total.toFixed(0)+' **',
-    SEP,'PARCEL / TAKEAWAY',
+    'CUSTOMER RECEIPT',
+    divider,
+    'Inv: #'+d.invNo+'   Date: '+d.date,
+    'Time: '+d.time+'   Pay: '+d.payMethod,
+    d.staffName?'Staff: '+d.staffName:'',
+    d.custName?'Name:  '+d.custName:'',
+    d.custPhone?'Phone: '+d.custPhone:'',
+    divider,
+    header,
+    divider,
+    custLines,
+    divider,
+    rpad('Subtotal:',30)+rpad('Rs.'+d.subtotal.toFixed(0),12),
+    d.discount>0?rpad('Discount:',30)+rpad('-Rs.'+d.discount.toFixed(0),12):'',
+    d.gst>0?rpad('GST ('+d.gstPct+'%):',30)+rpad('Rs.'+d.gst.toFixed(0),12):'',
+    divider,
+    rpad('** TOTAL:',30)+rpad('Rs.'+d.total.toFixed(0),12),
+    divider,
+    'PARCEL / TAKEAWAY',
     d.notes?'Note: '+d.notes:'',
+    divider,
+    shop.footer||'Thank you! Visit again.',
+    // Loyalty points section - only if customer phone entered
+    (function(){
+      if(!d.custPhone||d.custPhone.length<10) return '';
+      const lc=loyaltyDb.find(function(c){return c.phone===d.custPhone;});
+      if(!lc) return '';
+      const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
+      const totalPts=lc.points;
+      const redeemVal=Math.floor(totalPts/shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);
+      return [
+        '',
+        '==========================================',
+        '       ** LOYALTY REWARDS **',
+        '==========================================',
+        '  Earned this visit:  +'+ptsEarned+' pts',
+        '  Total points:        '+totalPts+' pts',
+        redeemVal>0?'  Redeem next visit:   Rs.'+redeemVal.toFixed(0):'  Keep earning points!',
+        '  (1 pt per Rs.'+shop.loyaltyRate+' spent)',
+        '==========================================',
+      ].join('\n');
+    })(),
   ].filter(Boolean).join('\n');
+
   await kotPrinter.print(custText);
 
   // Gap between slips
   await new Promise(r=>setTimeout(r,1200));
 
-  // SLIP 2: Kitchen KOT — items + qty only
-  const kitLines=d.cart.map(i=>'  '+i.qty+'x '+i.name+(i.note?' ['+i.note+']':'')).join('\n');
+  // ── SLIP 2: Kitchen KOT ──
+  const kitLines=d.cart.map(i=>'  '+String(i.qty).padStart(2)+'x  '+i.name+(i.note?'\n       >> '+i.note:'')).join('\n');
+  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
   const kotText=[
-    'KITCHEN KOT',
-    'Token #'+d.invNo+'   '+d.time,
-    'TAKEAWAY',SEP,kitLines,SEP,
-    d.notes?'** NOTE: '+d.notes+' **':'',
+    '======  KITCHEN KOT  ======',
+    'Token: #'+d.invNo,
+    'Date:  '+d.date+'   Time: '+d.time,
+    'Type:  TAKEAWAY',
+    d.staffName?'Staff: '+d.staffName:'',
+    divider,
+    '  Qty   Item',
+    divider,
+    kitLines,
+    divider,
+    'Total Items: '+totalQty,
+    d.notes?'\n*** NOTE: '+d.notes+' ***':'',
   ].filter(Boolean).join('\n');
-  await kotPrinter.print(kotText);
+  await kotPrinter.print(kotText,false); // false = no logo on KOT
 }
-
-
 async function testPrint(){
   const SEP='------------------------------------------\n';
   const text='TEST PRINT\n'+new Date().toLocaleTimeString()+'\n'+SEP+'  1x Chicken Biryani\n  2x Naan\n'+SEP+'** Printer OK **';
@@ -1227,10 +1674,31 @@ async function testPrint(){
 function toast(msg,type=''){const w=document.getElementById('toastW');const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
 // INIT
-renderCatTabs();renderMenuGrid();renderCart();renderStaffSelect();
+// Clear old demo data if present (one-time cleanup)
+(function clearDemoData(){
+  const cleaned=S.g('demoCleared',false);
+  if(!cleaned){
+    // Remove demo items if they match original demo names
+    const demoItems=['Chicken Dum Biryani','Mutton Biryani','Egg Biryani','Veg Biryani',
+      'Fish Biryani','Chicken Pulao','Mutton Pulao','Veg Pulao','Chicken Fry',
+      'Chicken 65','Naan','Roti','Cold Drink','Lassi','Raita','Mirchi Ka Salan','Phirni'];
+    const hasDemo=menuItems.some(i=>demoItems.includes(i.name));
+    if(hasDemo){
+      menuItems=[];
+      cats=[];
+      // Remove Raju if present
+      staffList=staffList.filter(s=>s.name!=='Raju');
+      saveAll();
+      console.log('DAWAT: Demo data cleared');
+    }
+    S.s('demoCleared',true);
+  }
+})();
+renderCatTabs();renderMenuGrid();renderCart();renderStaffSelect();kotPrinter.processLogo();
 const lowStockItems=menuItems.filter(i=>i.stock<=i.lowAt&&i.stock>0);
 const outItemsInit=menuItems.filter(i=>i.stock<=0);
-if(outItemsInit.length)toast('\u26a0\ufe0f '+outItemsInit.length+' items out of stock!','err');
+if(menuItems.length===0){toast('\ud83d\udce2 Welcome! Add your menu items in Admin \u2192 Items','ok');}
+else if(outItemsInit.length)toast('\u26a0\ufe0f '+outItemsInit.length+' items out of stock!','err');
 else if(lowStockItems.length)toast('\u26a0\ufe0f '+lowStockItems.length+' items running low');
 if(checkSession()){document.getElementById('loginScreen').classList.add('hidden');setTimeout(recoverInvNo,1500);}
 else{setTimeout(()=>document.getElementById('loginUser').focus(),100);}
