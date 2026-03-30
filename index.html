@@ -781,6 +781,24 @@ function gsGet(action){if(!SHEET_URL)return Promise.resolve({ok:false});return f
 function gsPost(action,data){if(!SHEET_URL)return Promise.resolve({ok:false,msg:'No URL set'});return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})}).then(function(r){return r.json();}).catch(function(e){return{ok:false,error:e.toString()};});}
 function syncAfterOrder(orderSnap){setSyncStatus('syncing');gsPost('saveOrder',orderSnap).then(function(r1){if(!r1.ok){setSyncStatus('err');return;}return gsPost('syncLoyalty',loyaltyDb);}).then(function(r2){if(!r2)return;return gsPost('syncMenu',menuItems);}).then(function(){setSyncStatus('ok');setTimeout(function(){setSyncStatus('idle');},4000);}).catch(function(){setSyncStatus('err');});}
 function syncAllData(){if(!SHEET_URL){toast('No Sheets URL set','err');return;}setSyncStatus('syncing');toast('Syncing to Google Sheets\u2026');gsPost('syncAll',{menu:menuItems,cats:cats,staff:staffList,loyalty:loyaltyDb,settings:shop}).then(function(r){if(r&&r.ok){setSyncStatus('ok');toast('Synced to Google Sheets!','ok');setTimeout(function(){setSyncStatus('idle');},4000);}else{setSyncStatus('err');toast('Sync failed \u2014 check URL','err');}}).catch(function(){setSyncStatus('err');toast('Sync error','err');});}
+// Test what actions Apps Script supports
+function testSheetsConnection(){
+  toast('\ud83d\udd0d Testing Sheets connection\u2026');
+  gsGet('getOrders').then(function(res){
+    if(res&&res.ok){
+      toast('\u2705 Sheets connected! Orders: '+(res.data?res.data.length:0),'ok');
+      console.log('getOrders response:',JSON.stringify(res).substring(0,200));
+    }else{
+      toast('\u274c Sheets error: '+(res?res.error:'no response'),'err');
+      console.log('getOrders failed:',res);
+    }
+  }).catch(function(e){
+    toast('\u274c Connection failed: '+e.message,'err');
+    console.error(e);
+  });
+}
+
+
 function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
 function saveSheetUrl(){toast('\u2705 URL is hardcoded in the app','ok');syncAllData();}
 
@@ -1825,14 +1843,14 @@ function toast(msg,type=''){const w=document.getElementById('toastW');const t=do
 // ── STARTUP: Load all data from Google Sheets ──
 function loadFromSheets(onDone){
   setSyncStatus('syncing');
-  toast('\u2601\ufe0f Loading data from Google Sheets\u2026');
+  // Try getAll first (new Apps Script)
+  // If fails, fall back to individual calls (old Apps Script)
   gsGet('getAll')
   .then(function(res){
     if(!res||!res.ok||!res.data){
-      setSyncStatus('err');
-      toast('\u26a0\ufe0f Could not load from Sheets \u2014 using local data','err');
-      if(onDone)onDone();
-      return;
+      // getAll not supported — try individual calls
+      console.log('DAWAT: getAll failed, trying individual calls');
+      return loadFromSheetsIndividual(onDone);
     }
     var d=res.data;
 
@@ -1898,6 +1916,78 @@ function loadFromSheets(onDone){
 }
 
 // ── Also add getAll to getOrders for orders history ──
+
+// Fallback: load each sheet individually (for old Apps Script)
+function loadFromSheetsIndividual(onDone){
+  var loaded=0;
+  var total=4; // menu, cats, staff, orders
+  function done(){loaded++;if(loaded>=total&&onDone)onDone();}
+
+  // Menu
+  gsGet('getMenu').then(function(res){
+    if(res&&res.ok&&res.data&&res.data.length>0){
+      menuItems=res.data;S.s('menu',menuItems);
+      console.log('DAWAT: loaded menu:',menuItems.length);
+    }
+    done();
+  }).catch(done);
+
+  // Categories
+  gsGet('getCategories').then(function(res){
+    if(res&&res.ok&&res.data&&res.data.length>0){
+      cats=res.data;S.s('cats',cats);
+      console.log('DAWAT: loaded cats:',cats.length);
+    }
+    done();
+  }).catch(done);
+
+  // Staff
+  gsGet('getStaff').then(function(res){
+    if(res&&res.ok&&res.data&&res.data.length>0){
+      staffList=res.data;S.s('staff',staffList);
+    }
+    done();
+  }).catch(done);
+
+  // Orders
+  gsGet('getOrders').then(function(res){
+    if(res&&res.ok&&res.data&&res.data.length>0){
+      var localInvNos=new Set(orders.map(function(o){return o.invNo;}));
+      var mapped=res.data.filter(function(o){
+        return !localInvNos.has(parseInt(o.InvNo||o.invNo));
+      }).map(function(o){
+        return{
+          invNo:parseInt(o.InvNo||o.invNo)||0,
+          date:o.Date||o.date||'',
+          time:o.Time||o.time||'',
+          custName:o.CustName||o.custName||'',
+          custPhone:o.CustPhone||o.custPhone||'',
+          staffName:o.Staff||o.staffName||'',
+          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
+          discount:parseFloat(o.Discount||o.discount)||0,
+          gst:parseFloat(o.GST||o.gst)||0,
+          total:parseFloat(o.Total||o.total)||0,
+          payMethod:o.PayMethod||o.payMethod||'CASH',
+          notes:o.Notes||o.notes||'',
+          status:o.Status||o.status||'delivered',
+          savedAt:o.SavedAt||o.savedAt||Date.now(),
+          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+        };
+      });
+      if(mapped.length>0){
+        orders=orders.concat(mapped);
+        orders.sort(function(a,b){return b.invNo-a.invNo;});
+        S.s('orders',orders);
+        toast('\u2705 Loaded '+mapped.length+' orders from Sheets','ok');
+      }
+    }
+    done();
+  }).catch(done);
+
+  setSyncStatus('ok');
+  setTimeout(function(){setSyncStatus('idle');},4000);
+}
+
 function loadOrdersFromSheets(){
   gsGet('getOrders')
   .then(function(res){
