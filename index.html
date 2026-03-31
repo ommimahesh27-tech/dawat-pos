@@ -801,33 +801,45 @@ function syncAfterOrder(orderSnap){
 function syncAllData(){
   if(!SHEET_URL){toast('No Sheets URL','err');return;}
   setSyncStatus('syncing');
-  toast('\u2601\ufe0f Syncing all data to Sheets\u2026');
-  var payload={
-    menu:     menuItems,
-    cats:     cats,
-    staff:    staffList,
-    loyalty:  loyaltyDb,
-    settings: shop,
-    invNo:    invNo,
-    credentials:{user:S.g('posUser','admin'),pass:S.g('posPass','dawat123')}
-  };
-  gsPost('syncAll',payload)
-  .then(function(r){
-    if(r&&r.ok){
+  toast('\u2601\ufe0f Starting full sync\u2026');
+
+  var steps=[
+    {name:'Settings',  fn:function(){return gsPost('saveSettings', shop);}},
+    {name:'Categories',fn:function(){return gsPost('syncCategories', cats);}},
+    {name:'Menu',      fn:function(){return gsPost('syncMenu', menuItems);}},
+    {name:'Staff',     fn:function(){return gsPost('syncStaff', staffList);}},
+    {name:'Loyalty',   fn:function(){return gsPost('syncLoyalty', loyaltyDb);}},
+    {name:'InvNo',     fn:function(){return gsPost('saveInvNo', invNo);}},
+    {name:'Credentials',fn:function(){return gsPost('saveCredentials',{user:S.g('posUser','admin'),pass:S.g('posPass','dawat123')});}},
+  ];
+
+  var idx=0;
+  function runNext(){
+    if(idx>=steps.length){
       setSyncStatus('ok');
       toast('\u2705 All data synced to Google Sheets!','ok');
-      setTimeout(function(){setSyncStatus('idle');},4000);
-      console.log('syncAll result:',JSON.stringify(r));
-    }else{
-      setSyncStatus('err');
-      toast('\u274c Sync failed','err');
-      console.log('syncAll failed:',r);
+      setTimeout(function(){setSyncStatus('idle');},5000);
+      return;
     }
-  })
-  .catch(function(e){
-    setSyncStatus('err');
-    toast('\u274c Sync error: '+e.message,'err');
-  });
+    var step=steps[idx++];
+    toast('\u2601\ufe0f Syncing '+step.name+'\u2026');
+    step.fn()
+    .then(function(r){
+      if(r&&r.ok){
+        console.log('\u2705 Synced: '+step.name);
+        setTimeout(runNext, 500); // small delay between calls
+      } else {
+        console.log('\u274c Failed: '+step.name, r);
+        setTimeout(runNext, 500); // continue even if one fails
+      }
+    })
+    .catch(function(e){
+      console.log('\u274c Error: '+step.name, e.message);
+      setTimeout(runNext, 500);
+    });
+  }
+
+  runNext();
 }
 
 function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
