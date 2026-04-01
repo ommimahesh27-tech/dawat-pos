@@ -2036,11 +2036,42 @@ function loadFromSheets(onDone){
       invNo=parseInt(d.invNo);
       S.s('invNo',invNo);
     }
+    // ── Orders (now included in getAll) ──
+    if(d.orders&&d.orders.length>0){
+      var localInvNos=new Set(orders.map(function(o){return o.invNo;}));
+      var newFromSheets=d.orders.filter(function(o){
+        return !localInvNos.has(parseInt(o.InvNo||o.invNo));
+      }).map(function(o){
+        return{
+          invNo:parseInt(o.InvNo||o.invNo)||0,
+          date:o.Date||o.date||'',
+          time:o.Time||o.time||'',
+          custName:o.CustName||o.custName||'',
+          custPhone:o.CustPhone||o.custPhone||'',
+          staffName:o.Staff||o.staffName||'',
+          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
+          discount:parseFloat(o.Discount||o.discount)||0,
+          gst:parseFloat(o.GST||o.gst)||0,
+          total:parseFloat(o.Total||o.total)||0,
+          payMethod:o.PayMethod||o.payMethod||'CASH',
+          notes:o.Notes||o.notes||'',
+          status:o.Status||o.status||'delivered',
+          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+        };
+      });
+      if(newFromSheets.length>0){
+        orders=orders.concat(newFromSheets);
+        orders.sort(function(a,b){return b.invNo-a.invNo;});
+        S.s('orders',orders);
+        console.log('DAWAT: merged '+newFromSheets.length+' orders from Sheets');
+      }
+    }
 
     setSyncStatus('ok');
     setTimeout(function(){setSyncStatus('idle');},4000);
     toast('\u2705 Data loaded from Google Sheets!','ok');
-    console.log('DAWAT: Loaded from Sheets \u2014 menu:'+menuItems.length+' cats:'+cats.length);
+    console.log('DAWAT: Loaded from Sheets \u2014 menu:'+menuItems.length+' cats:'+cats.length+' orders:'+orders.length);
     if(onDone)onDone();
   })
   .catch(function(e){
