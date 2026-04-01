@@ -777,8 +777,37 @@ function recoverInvNo(){if(!SHEET_URL)return;gsGet('getOrders').then(function(re
 
 var SHEET_URL='https://script.google.com/macros/s/AKfycbz8T0M843bzYWMx3YF_u1AMl67a8RpbInRMeID1WtOMxW25E6Q-rMa-ZWz9sWJ4-VOK/exec';
 var syncStatus='idle';
-function gsGet(action){if(!SHEET_URL)return Promise.resolve({ok:false});return fetch(SHEET_URL+'?action='+action).then(function(r){return r.json();}).catch(function(){return{ok:false};});}
-function gsPost(action,data){if(!SHEET_URL)return Promise.resolve({ok:false,msg:'No URL set'});return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})}).then(function(r){return r.json();}).catch(function(e){return{ok:false,error:e.toString()};});}
+function gsGet(action){
+  if(!SHEET_URL)return Promise.resolve({ok:false});
+  return fetch(SHEET_URL+'?action='+action)
+    .then(function(r){
+      return r.text().then(function(txt){
+        try{
+          return JSON.parse(txt);
+        }catch(e){
+          console.error('DAWAT gsGet('+action+') non-JSON response:',txt.substring(0,300));
+          // Show in debug panel if open
+          var dbg=document.getElementById('debugOut');
+          if(dbg&&dbg.style.display!=='none'){
+            dbg.textContent+= '\n\n=== RAW SERVER RESPONSE ('+action+') ===\n'+txt.substring(0,600);
+          }
+          return{ok:false,error:'Non-JSON: '+txt.substring(0,100)};
+        }
+      });
+    })
+    .catch(function(e){return{ok:false,error:e.toString()};});
+}
+function gsPost(action,data){
+  if(!SHEET_URL)return Promise.resolve({ok:false,msg:'No URL set'});
+  return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:action,data:data})})
+    .then(function(r){
+      return r.text().then(function(txt){
+        try{return JSON.parse(txt);}
+        catch(e){return{ok:false,error:'Non-JSON: '+txt.substring(0,100)};}
+      });
+    })
+    .catch(function(e){return{ok:false,error:e.toString()};});
+}
 function syncAfterOrder(orderSnap){
   setSyncStatus('syncing');
   gsPost('saveOrder',orderSnap)
@@ -846,43 +875,24 @@ function debugSheetsConnection(){
   var out=document.getElementById('debugOut');
   if(!out)return;
   out.style.display='block';
-  out.textContent='Testing connection...\n';
-  // Test getAll
-  gsGet('getAll').then(function(res){
-    out.textContent='=== getAll response ===\n';
-    out.textContent+='ok: '+res.ok+'\n';
-    if(res.data){
-      var d=res.data;
-      out.textContent+='keys: '+Object.keys(d).join(', ')+'\n';
-      out.textContent+='menu count: '+(d.menu?d.menu.length:'MISSING')+'\n';
-      out.textContent+='cats count: '+(d.cats?d.cats.length:'MISSING')+'\n';
-      out.textContent+='orders count: '+(d.orders?d.orders.length:'MISSING ❌')+'\n';
-      if(d.ordersError) out.textContent+='orders ERROR: '+d.ordersError+' ❌\n';
-      out.textContent+='staff count: '+(d.staff?d.staff.length:'MISSING')+'\n';
-      if(d.orders&&d.orders.length>0){
-        out.textContent+='\n=== First order from Sheets ===\n';
-        out.textContent+=JSON.stringify(d.orders[0],null,2).substring(0,400);
-      }
-    }else{
-      out.textContent+='ERROR: '+JSON.stringify(res).substring(0,300);
-    }
-    // Also test getOrders separately
+  out.textContent='Testing...\n';
+  fetch(SHEET_URL+'?action=ping')
+  .then(function(r){out.textContent+='HTTP status: '+r.status+'\n';return r.text();})
+  .then(function(txt){
+    out.textContent+='Raw ping:\n'+txt.substring(0,300)+'\n\n';
+    return gsGet('getAll');
+  }).then(function(res){
+    out.textContent+='getAll ok: '+res.ok+'\n';
+    if(res.error)out.textContent+='error: '+res.error+'\n';
+    if(res.data){var d=res.data;out.textContent+='keys: '+Object.keys(d).join(', ')+'\n';out.textContent+='orders: '+(d.orders?d.orders.length:'MISSING')+'\n';if(d.ordersError)out.textContent+='ordersError: '+d.ordersError+'\n';}
     return gsGet('getOrders');
-  }).then(function(res2){
-    if(!res2)return;
-    out.textContent+='\n\n=== getOrders response ===\n';
-    out.textContent+='ok: '+res2.ok+'\n';
-    out.textContent+='orders count: '+(res2.data?res2.data.length:'0 or error')+'\n';
-    if(res2.data&&res2.data.length>0){
-      out.textContent+='\nFirst order keys: '+Object.keys(res2.data[0]).join(', ')+'\n';
-      out.textContent+='First order sample:\n'+JSON.stringify(res2.data[0],null,2).substring(0,400);
-    }
-    out.textContent+='\n\nLocal orders in memory: '+orders.length;
-  }).catch(function(e){
-    out.textContent+='\nFetch error: '+e.message;
-  });
+  }).then(function(r2){
+    if(!r2)return;
+    out.textContent+='getOrders ok:'+r2.ok+' count:'+(r2.data?r2.data.length:0)+'\n';
+    if(r2.data&&r2.data.length)out.textContent+='keys: '+Object.keys(r2.data[0]).join(', ')+'\n';
+    out.textContent+='Local orders: '+orders.length+'\nDone';
+  }).catch(function(e){out.textContent+='ERROR:'+e.message;});
 }
-
 function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
 function saveSheetUrl(){toast('\u2705 URL is hardcoded in the app','ok');syncAllData();}
 
