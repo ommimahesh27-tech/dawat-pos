@@ -2093,10 +2093,11 @@ function loadFromSheets(onDone){
     }
     // ── Orders (now included in getAll) ──
     if(d.orders&&d.orders.length>0){
-      var localInvNos=new Set(orders.map(function(o){return o.invNo;}));
-      var newFromSheets=d.orders.filter(function(o){
-        return !localInvNos.has(parseInt(o.InvNo||o.invNo));
-      }).map(function(o){
+      // Always use Sheets as source of truth — replace local orders that exist in Sheets
+      var sheetsInvNos=new Set(d.orders.map(function(o){return parseInt(o.InvNo||o.invNo)||0;}));
+      // Keep only local orders NOT in Sheets (truly local-only)
+      var localOnly=orders.filter(function(o){return !sheetsInvNos.has(o.invNo);});
+      var newFromSheets=d.orders.map(function(o){
         return{
           invNo:parseInt(o.InvNo||o.invNo)||0,
           date:o.Date||o.date||'',
@@ -2111,16 +2112,14 @@ function loadFromSheets(onDone){
           payMethod:o.PayMethod||o.payMethod||'CASH',
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
           cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
         };
       });
-      if(newFromSheets.length>0){
-        orders=orders.concat(newFromSheets);
-        orders.sort(function(a,b){return b.invNo-a.invNo;});
-        S.s('orders',orders);
-        console.log('DAWAT: merged '+newFromSheets.length+' orders from Sheets');
-      }
+      orders=localOnly.concat(newFromSheets);
+      orders.sort(function(a,b){return b.invNo-a.invNo;});
+      S.s('orders',orders);
+      console.log('DAWAT: merged '+newFromSheets.length+' orders from Sheets, '+localOnly.length+' local-only');
     }
 
     setSyncStatus('ok');
@@ -2139,36 +2138,30 @@ function loadFromSheets(onDone){
 // ── Also add getAll to getOrders for orders history ──
 
 // Helper: convert Sheets Date (DD/MM/YY or DD/MM/YYYY) + Time string → Unix ms timestamp
-function parseSavedAt(dateStr, timeStr, fallback){
+function parseSavedAt(savedAt, dateStr, timeStr){
   try{
-    if(!dateStr) return fallback||Date.now();
-    // Already a valid large number (unix ms)
-    var n=parseFloat(dateStr);
-    if(!isNaN(n)&&n>1000000000000) return n;
-    // Parse DD/MM/YY or DD/MM/YYYY
-    var parts=dateStr.split('/');
-    if(parts.length===3){
-      var d=parseInt(parts[0]);
-      var m=parseInt(parts[1])-1;
-      var y=parseInt(parts[2]);
-      if(y<100) y+=2000;
-      var h=0,mi=0;
-      if(timeStr){
-        var tm=timeStr.toString().trim();
-        var isPM=tm.toLowerCase().indexOf('pm')>=0;
-        var isAM=tm.toLowerCase().indexOf('am')>=0;
-        tm=tm.replace(/[^0-9:]/g,'');
-        var tp=tm.split(':');
-        h=parseInt(tp[0])||0;
-        mi=parseInt(tp[1])||0;
-        if(isPM&&h<12) h+=12;
-        if(isAM&&h===12) h=0;
+    // 1. Use SavedAt unix ms timestamp if valid
+    if(savedAt){var n=parseFloat(savedAt);if(!isNaN(n)&&n>1000000000000)return n;}
+    // 2. Parse DD/MM/YY + Time string
+    if(dateStr){
+      var parts=String(dateStr).split('/');
+      if(parts.length===3){
+        var d=parseInt(parts[0]),m=parseInt(parts[1])-1,y=parseInt(parts[2]);
+        if(y<100)y+=2000;
+        var h=0,mi=0;
+        if(timeStr){
+          var tm=String(timeStr).trim();
+          var isPM=tm.toLowerCase().indexOf('pm')>=0,isAM=tm.toLowerCase().indexOf('am')>=0;
+          tm=tm.replace(/[^0-9:]/g,'');
+          var tp=tm.split(':');h=parseInt(tp[0])||0;mi=parseInt(tp[1])||0;
+          if(isPM&&h<12)h+=12;if(isAM&&h===12)h=0;
+        }
+        var dt=new Date(y,m,d,h,mi,0);
+        if(!isNaN(dt.getTime()))return dt.getTime();
       }
-      var dt=new Date(y,m,d,h,mi,0);
-      if(!isNaN(dt.getTime())) return dt.getTime();
     }
   }catch(e){}
-  return fallback||Date.now();
+  return Date.now();
 }
 
 // Fallback: load each sheet individually (for old Apps Script)
@@ -2224,7 +2217,7 @@ function loadFromSheetsIndividual(onDone){
           payMethod:o.PayMethod||o.payMethod||'CASH',
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
           cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
         };
       });
@@ -2266,7 +2259,7 @@ function loadOrdersFromSheets(){
           payMethod:o.PayMethod||o.payMethod||'CASH',
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
           cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
         };
       });
@@ -2304,7 +2297,7 @@ function forceReloadOrders(){
         payMethod:o.PayMethod||o.payMethod||'CASH',
         notes:o.Notes||o.notes||'',
         status:o.Status||o.status||'delivered',
-        savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+        savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
         cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
       };
     });
