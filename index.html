@@ -756,7 +756,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 
 <script>
 var S={g:function(k,d){try{var v=localStorage.getItem('dw4_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},s:function(k,v){try{localStorage.setItem('dw4_'+k,JSON.stringify(v));}catch(e){}}};
-let shop=S.g('shop',{name:'DAWAT',tagline:'Takeaway Point',address:'Visakhapatnam',phone:'',footer:'Thank you for choosing DAWAT! \ud83c\udf5b',adminPin:'1234',gstEnabled:false,gstPct:5,loyaltyRate:10,loyaltyRedeemPer:100,logo:''});
+let shop=S.g('shop',{name:'DAWAT',tagline:'Takeaway Point',address:'Visakhapatnam',phone:'',footer:'Thank you for choosing DAWAT! \ud83c\udf5b',adminPin:'1234',gstEnabled:false,gstPct:5,loyaltyRate:10,loyaltyRedeemPer:100,logo:'',gstin:''});
 let cats=S.g('cats',[]);
 let menuItems=S.g('menu',[]);
 let orders=S.g('orders',[]);let preOrders=S.g('preorders',[]);
@@ -1281,6 +1281,7 @@ function renderSettings(){document.getElementById('admBody').innerHTML=`<div cla
   </div>
   <div style="font-size:9px;color:var(--muted);line-height:1.6">Best: black &amp; white PNG, max 300px wide, transparent background</div>
 </div>
+<div class="fg"><label>GSTIN (optional)</label><input id="sGstin" value="${shop.gstin||''}" placeholder="e.g. 37AABCD1234E1ZX" style="text-transform:uppercase"></div>
 <div class="fg"><label>Admin PIN (4 digits)</label><input id="sPin" type="password" maxlength="4" value="${shop.adminPin}" placeholder="4-digit PIN"></div>
 <button class="btn-g" onclick="saveSettings()">\ud83d\udcbe Save Settings</button>
 </div></div>
@@ -1298,6 +1299,7 @@ function renderSettings(){document.getElementById('admBody').innerHTML=`<div cla
 </div>
 <div style="display:flex;gap:7px">
   <button class="btn-g" style="flex:1" onclick="syncAllData()">\u2601\ufe0f Sync All Data Now</button>
+  <button class="btn-o" onclick="forceReloadOrders()">\ud83d\udd04 Reload Orders</button>
   <button class="btn-o" onclick="setSyncStatus('idle')">Reset</button>
 </div>
 <div style="margin-top:8px;font-size:10px;color:var(--muted)">Status: <span id="syncStatusTxt">${syncStatus}</span></div></div></div>
@@ -1337,6 +1339,7 @@ function saveSettings(){
     address:document.getElementById('sAd').value||'',
     phone:document.getElementById('sPh').value||'',
     footer:document.getElementById('sFt').value||'',
+    gstin:(document.getElementById('sGstin').value||'').toUpperCase(),
     adminPin:document.getElementById('sPin').value||shop.adminPin,
     logo:logoData
   };
@@ -1576,7 +1579,7 @@ var kotPrinter={
     const ESC=0x1B,GS=0x1D;
     const init    = [ESC,0x40];
     const cut     = [GS,0x56,0x41,0x05];
-    const feed    = [ESC,0x64,0x03];
+    const feed    = [ESC,0x64,0x04]; // feed 4 lines before cut
     const center  = [ESC,0x61,0x01];
     const left    = [ESC,0x61,0x00];
     const bold_on = [ESC,0x45,0x01];
@@ -1595,7 +1598,6 @@ var kotPrinter={
           bytes.push(...logoBytes);
           bytes.push(...this.encode('\n'));
         }else{
-          // Fallback to text header
           bytes.push(...center,...bold_on,...dbl_hw);
           bytes.push(...this.encode(shop.name+'\n'));
           bytes.push(...normal,...bold_off);
@@ -1610,7 +1612,23 @@ var kotPrinter={
       bytes.push(...this.encode(shop.name+'\n'));
       bytes.push(...normal,...bold_off);
     }
-    bytes.push(...left,...this.encode(text));
+    // Process text line by line — bold lines that start with '=' or contain 'NET TOTAL' or 'BILL OF SUPPLY'
+    const textLines=text.split('\n');
+    bytes.push(...left);
+    for(let i=0;i<textLines.length;i++){
+      const ln=textLines[i];
+      const isBoldLine=(ln.indexOf('=')=== 0&&ln.trim().length>2)||
+                        ln.indexOf('NET TOTAL')>=0||
+                        ln.indexOf('BILL OF SUPPLY')>=0||
+                        ln.indexOf('LOYALTY REWARDS')>=0;
+      if(isBoldLine){
+        bytes.push(...bold_on);
+        bytes.push(...this.encode(ln+'\n'));
+        bytes.push(...bold_off);
+      }else{
+        bytes.push(...this.encode(ln+'\n'));
+      }
+    }
     bytes.push(...feed,...cut);
     return new Uint8Array(bytes);
   },
@@ -1722,47 +1740,109 @@ var kotPrinter={
 // ── sendKOT: prints Customer Receipt + Kitchen KOT after every order ──
 // ── Plain text versions for direct printer output ──
 function custSlip_text(d){
-  const SEP='------------------------------------------\n';
   const W=42;
+  const SEP='='.repeat(W);
+  const DIV='-'.repeat(W);
   function pad(s,n){return(s+'').padEnd(n).substring(0,n);}
   function rpad(s,n){return(s+'').padStart(n).substring(0,n);}
-  const header='  Item                 Rate    Amount';
-  const divider='-'.repeat(W);
-  const lines=d.cart.map(function(i){
-    return pad(i.qty+'x '+i.name,22)+' '+rpad('Rs.'+i.price,7)+' '+rpad('Rs.'+(i.price*i.qty).toFixed(0),8);
-  }).join('\n');
+  function center(s){const sp=Math.max(0,Math.floor((W-s.length)/2));return ' '.repeat(sp)+s;}
+
+  // ── HEADER: Shop name bold (uppercase), address, GSTIN ──
+  const lines=[];
+  lines.push(SEP);
+  lines.push(center(shop.name.toUpperCase()));
+  if(shop.tagline) lines.push(center(shop.tagline));
+  if(shop.address) lines.push(center(shop.address));
+  if(shop.phone)   lines.push(center('Ph: '+shop.phone));
+  if(shop.gstin)   lines.push(center('GSTIN: '+shop.gstin));
+  lines.push(SEP);
+  lines.push(center('BILL OF SUPPLY'));
+  lines.push(SEP);
+
+  // ── Bill meta ──
+  lines.push('Bill No.: #'+d.invNo+'   Date: '+d.date);
+  lines.push('Time: '+d.time+'   Pay: '+d.payMethod);
+  if(d.staffName) lines.push('Staff: '+d.staffName);
+  if(d.custName)  lines.push('Name : '+d.custName);
+  if(d.custPhone) lines.push('Ph   : '+d.custPhone);
+  lines.push(DIV);
+
+  // ── Item table header ──
+  lines.push(pad('SN  Description',24)+rpad('Qty',4)+rpad('Rate',7)+rpad('Amt',7));
+  lines.push(DIV);
+
+  // ── Item rows ──
+  d.cart.forEach(function(item,idx){
+    const sn=pad((idx+1)+'.',3);
+    // Name may wrap if long
+    const fullName=item.name;
+    const nameCol=20;
+    const nameLine=fullName.substring(0,nameCol);
+    const nameRest=fullName.length>nameCol?fullName.substring(nameCol):'';
+    lines.push(sn+' '+pad(nameLine,nameCol)+rpad(item.qty,4)+rpad(item.price.toFixed(0),7)+rpad((item.price*item.qty).toFixed(0),7));
+    if(nameRest) lines.push('    '+pad(nameRest,nameCol));
+    if(item.note) lines.push('    >> '+item.note);
+  });
+  lines.push(DIV);
+
+  // ── Qty + Gross Total ──
+  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  lines.push(pad('    Qty: '+totalQty,28)+rpad(d.subtotal.toFixed(0),14));
+  lines.push(pad('Gross Total',28)+rpad(d.subtotal.toFixed(0),14));
+  lines.push(DIV);
+
+  // ── Discount ──
+  if(d.discount>0){
+    lines.push(pad('Discount:',28)+rpad('-Rs.'+d.discount.toFixed(0),14));
+  }
+  if(d.loyaltyRedeem>0){
+    lines.push(pad('Points Redeemed:',28)+rpad('-Rs.'+d.loyaltyRedeem.toFixed(0),14));
+  }
+
+  // ── GST breakdown: CGST + SGST ──
+  if(d.gst>0&&d.gstPct>0){
+    const halfPct=(d.gstPct/2).toFixed(1);
+    const halfAmt=(d.gst/2).toFixed(0);
+    lines.push(pad('CGST @ '+halfPct+'%:',28)+rpad('Rs.'+halfAmt,14));
+    lines.push(pad('SGST @ '+halfPct+'%:',28)+rpad('Rs.'+halfAmt,14));
+    lines.push(DIV);
+  }
+
+  // ── NET TOTAL ──
+  lines.push(pad('NET TOTAL',28)+rpad(d.total.toFixed(0),14));
+  lines.push(SEP);
+
+  // ── Payment method ──
+  lines.push('  Pay: '+d.payMethod+': Rs.'+d.total.toFixed(0));
+  lines.push(SEP);
+
+  // ── Notes ──
+  if(d.notes) lines.push('Note: '+d.notes);
+
+  // ── GST notice ──
+  if(!d.gst||d.gst===0){
+    lines.push(center('COMPOSITION TAXABLE PERSON'));
+    lines.push(center('NOT ELIGIBLE TO COLLECT TAX'));
+  }
+  lines.push(DIV);
+
+  // ── Footer ──
+  lines.push(center(shop.footer||'Thank you! Visit again.'));
+  lines.push(SEP);
+
+  // ── Loyalty ──
   const lc=loyaltyDb.find(function(c){return c.phone===d.custPhone;});
-  let loyaltySection='';
   if(lc&&d.custPhone&&d.custPhone.length>=10){
     const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
     const redeemVal=Math.floor(lc.points/shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);
-    loyaltySection='\n==========================================\n'
-      +'       ** LOYALTY REWARDS **\n'
-      +'==========================================\n'
-      +'  Earned this visit:  +'+ptsEarned+' pts\n'
-      +'  Total points:        '+lc.points+' pts\n'
-      +(redeemVal>0?'  Redeem next visit:   Rs.'+redeemVal.toFixed(0)+'\n':'  Keep earning points!\n')
-      +'  (1 pt per Rs.'+shop.loyaltyRate+' spent)\n'
-      +'==========================================';
+    lines.push(center('** LOYALTY REWARDS **'));
+    lines.push('  Earned this visit: +'+ptsEarned+' pts');
+    lines.push('  Total points:       '+lc.points+' pts');
+    lines.push(redeemVal>0?'  Redeem next visit: Rs.'+redeemVal.toFixed(0):'  Keep earning points!');
+    lines.push(SEP);
   }
-  return [
-    'CUSTOMER RECEIPT',divider,
-    'Inv: #'+d.invNo+'   Date: '+d.date,
-    'Time: '+d.time+'   Pay: '+d.payMethod,
-    d.staffName?'Staff: '+d.staffName:'',
-    d.custName?'Name:  '+d.custName:'',
-    d.custPhone?'Phone: '+d.custPhone:'',
-    divider,header,divider,lines,divider,
-    rpad('Subtotal:',30)+rpad('Rs.'+d.subtotal.toFixed(0),12),
-    d.discount>0?rpad('Discount:',30)+rpad('-Rs.'+d.discount.toFixed(0),12):'',
-    d.gst>0?rpad('GST ('+d.gstPct+'%):',30)+rpad('Rs.'+d.gst.toFixed(0),12):'',
-    divider,
-    rpad('** TOTAL:',30)+rpad('Rs.'+d.total.toFixed(0),12),
-    divider,'PARCEL / TAKEAWAY',
-    d.notes?'Note: '+d.notes:'',divider,
-    shop.footer||'Thank you! Visit again.',
-    loyaltySection,
-  ].filter(Boolean).join('\n');
+
+  return lines.filter(function(l){return l!==null&&l!==undefined;}).join('\n');
 }
 
 function chefSlip_text(d){
@@ -1788,66 +1868,78 @@ function chefSlip_text(d){
 
 
 async function sendKOT(d){
-  const SEP='------------------------------------------\n';
-  const W=42; // print width chars for 80mm Font A
+  const W=42;
+  const SEP='='.repeat(W);
+  const DIV='-'.repeat(W);
+  function pad(s,n){return(s+'').padEnd(n).substring(0,n);}
+  function rpad(s,n){return(s+'').padStart(n).substring(0,n);}
+  function center(s){const sp=Math.max(0,Math.floor((W-s.length)/2));return ' '.repeat(sp)+s;}
 
-  function pad(str,n){return (str+'').padEnd(n).substring(0,n);}
-  function rpad(str,n){return (str+'').padStart(n).substring(0,n);}
-
-  // ── SLIP 1: Customer Receipt ──
-  const header='  Item                 Rate    Amount';
-  const divider='-'.repeat(W);
-  const custLines=d.cart.map(i=>{
-    const nm=pad(i.qty+'x '+i.name,22);
-    const rate=rpad('Rs.'+i.price,7);
-    const amt=rpad('Rs.'+(i.price*i.qty).toFixed(0),8);
-    return nm+' '+rate+' '+amt;
-  }).join('\n');
-
-  const custText=[
-    'CUSTOMER RECEIPT',
-    divider,
-    'Inv: #'+d.invNo+'   Date: '+d.date,
-    'Time: '+d.time+'   Pay: '+d.payMethod,
-    d.staffName?'Staff: '+d.staffName:'',
-    d.custName?'Name:  '+d.custName:'',
-    d.custPhone?'Phone: '+d.custPhone:'',
-    divider,
-    header,
-    divider,
-    custLines,
-    divider,
-    rpad('Subtotal:',30)+rpad('Rs.'+d.subtotal.toFixed(0),12),
-    d.discount>0?rpad('Discount:',30)+rpad('-Rs.'+d.discount.toFixed(0),12):'',
-    d.gst>0?rpad('GST ('+d.gstPct+'%):',30)+rpad('Rs.'+d.gst.toFixed(0),12):'',
-    divider,
-    rpad('** TOTAL:',30)+rpad('Rs.'+d.total.toFixed(0),12),
-    divider,
-    'PARCEL / TAKEAWAY',
-    d.notes?'Note: '+d.notes:'',
-    divider,
-    shop.footer||'Thank you! Visit again.',
-    // Loyalty points section - only if customer phone entered
-    (function(){
-      if(!d.custPhone||d.custPhone.length<10) return '';
-      const lc=loyaltyDb.find(function(c){return c.phone===d.custPhone;});
-      if(!lc) return '';
-      const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
-      const totalPts=lc.points;
-      const redeemVal=Math.floor(totalPts/shop.loyaltyRedeemPer)*(shop.loyaltyRedeemPer/shop.loyaltyRate);
-      return [
-        '',
-        '==========================================',
-        '       ** LOYALTY REWARDS **',
-        '==========================================',
-        '  Earned this visit:  +'+ptsEarned+' pts',
-        '  Total points:        '+totalPts+' pts',
-        redeemVal>0?'  Redeem next visit:   Rs.'+redeemVal.toFixed(0):'  Keep earning points!',
-        '  (1 pt per Rs.'+shop.loyaltyRate+' spent)',
-        '==========================================',
-      ].join('\n');
-    })(),
-  ].filter(Boolean).join('\n');
+  // ── SLIP 1: Customer Receipt (Jain Electronics style) ──
+  const custLines2=[];
+  custLines2.push(SEP);
+  custLines2.push(center(shop.name.toUpperCase()));
+  if(shop.tagline) custLines2.push(center(shop.tagline));
+  if(shop.address) custLines2.push(center(shop.address));
+  if(shop.phone)   custLines2.push(center('Ph: '+shop.phone));
+  if(shop.gstin)   custLines2.push(center('GSTIN: '+shop.gstin));
+  custLines2.push(SEP);
+  custLines2.push(center('BILL OF SUPPLY'));
+  custLines2.push(SEP);
+  custLines2.push('Bill No.: #'+d.invNo+'   Date: '+d.date);
+  custLines2.push('Time: '+d.time+'   Pay: '+d.payMethod);
+  if(d.staffName) custLines2.push('Staff: '+d.staffName);
+  if(d.custName)  custLines2.push('Name : '+d.custName);
+  if(d.custPhone) custLines2.push('Ph   : '+d.custPhone);
+  custLines2.push(DIV);
+  custLines2.push(pad('SN  Description',24)+rpad('Qty',4)+rpad('Rate',7)+rpad('Amt',7));
+  custLines2.push(DIV);
+  d.cart.forEach(function(item,idx){
+    const sn=pad((idx+1)+'.',3);
+    const nameLine=item.name.substring(0,20);
+    const nameRest=item.name.length>20?item.name.substring(20):'';
+    custLines2.push(sn+' '+pad(nameLine,20)+rpad(item.qty,4)+rpad(item.price.toFixed(0),7)+rpad((item.price*item.qty).toFixed(0),7));
+    if(nameRest) custLines2.push('     '+pad(nameRest,20));
+    if(item.note) custLines2.push('    >> '+item.note);
+  });
+  custLines2.push(DIV);
+  const totalQty2=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  custLines2.push(pad('    Qty: '+totalQty2,28)+rpad(d.subtotal.toFixed(0),14));
+  custLines2.push(pad('Gross Total',28)+rpad(d.subtotal.toFixed(0),14));
+  custLines2.push(DIV);
+  if(d.discount>0) custLines2.push(pad('Discount:',28)+rpad('-Rs.'+d.discount.toFixed(0),14));
+  if(d.loyaltyRedeem>0) custLines2.push(pad('Points Redeemed:',28)+rpad('-Rs.'+d.loyaltyRedeem.toFixed(0),14));
+  if(d.gst>0&&d.gstPct>0){
+    const halfPct=(d.gstPct/2).toFixed(1);
+    const halfAmt=(d.gst/2).toFixed(0);
+    custLines2.push(pad('CGST @ '+halfPct+'%:',28)+rpad('Rs.'+halfAmt,14));
+    custLines2.push(pad('SGST @ '+halfPct+'%:',28)+rpad('Rs.'+halfAmt,14));
+    custLines2.push(DIV);
+  }
+  custLines2.push(pad('NET TOTAL',28)+rpad(d.total.toFixed(0),14));
+  custLines2.push(SEP);
+  custLines2.push('  Pay: '+d.payMethod+': Rs.'+d.total.toFixed(0));
+  custLines2.push(SEP);
+  if(d.notes) custLines2.push('Note: '+d.notes);
+  if(!d.gst||d.gst===0){
+    custLines2.push(center('COMPOSITION TAXABLE PERSON'));
+    custLines2.push(center('NOT ELIGIBLE TO COLLECT TAX'));
+  }
+  custLines2.push(DIV);
+  custLines2.push(center(shop.footer||'Thank you! Visit again.'));
+  custLines2.push(SEP);
+  // Loyalty
+  (function(){
+    if(!d.custPhone||d.custPhone.length<10)return;
+    const lc=loyaltyDb.find(function(c){return c.phone===d.custPhone;});
+    if(!lc)return;
+    const ptsEarned=Math.floor(d.total/shop.loyaltyRate);
+    custLines2.push(center('** LOYALTY REWARDS **'));
+    custLines2.push('  Earned this visit: +'+ptsEarned+' pts');
+    custLines2.push('  Total points:       '+lc.points+' pts');
+    custLines2.push(SEP);
+  })();
+  const custText=custLines2.join('\n');
 
   await kotPrinter.print(custText);
 
@@ -1960,6 +2052,39 @@ function loadFromSheets(onDone){
 
 // ── Also add getAll to getOrders for orders history ──
 
+// Helper: convert Sheets Date (DD/MM/YY or DD/MM/YYYY) + Time string → Unix ms timestamp
+function parseSavedAt(dateStr, timeStr, fallback){
+  try{
+    if(!dateStr) return fallback||Date.now();
+    // Already a valid large number (unix ms)
+    var n=parseFloat(dateStr);
+    if(!isNaN(n)&&n>1000000000000) return n;
+    // Parse DD/MM/YY or DD/MM/YYYY
+    var parts=dateStr.split('/');
+    if(parts.length===3){
+      var d=parseInt(parts[0]);
+      var m=parseInt(parts[1])-1;
+      var y=parseInt(parts[2]);
+      if(y<100) y+=2000;
+      var h=0,mi=0;
+      if(timeStr){
+        var tm=timeStr.toString().trim();
+        var isPM=tm.toLowerCase().indexOf('pm')>=0;
+        var isAM=tm.toLowerCase().indexOf('am')>=0;
+        tm=tm.replace(/[^0-9:]/g,'');
+        var tp=tm.split(':');
+        h=parseInt(tp[0])||0;
+        mi=parseInt(tp[1])||0;
+        if(isPM&&h<12) h+=12;
+        if(isAM&&h===12) h=0;
+      }
+      var dt=new Date(y,m,d,h,mi,0);
+      if(!isNaN(dt.getTime())) return dt.getTime();
+    }
+  }catch(e){}
+  return fallback||Date.now();
+}
+
 // Fallback: load each sheet individually (for old Apps Script)
 function loadFromSheetsIndividual(onDone){
   var loaded=0;
@@ -2013,7 +2138,7 @@ function loadFromSheetsIndividual(onDone){
           payMethod:o.PayMethod||o.payMethod||'CASH',
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
-          savedAt:o.SavedAt||o.savedAt||Date.now(),
+          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
           cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
         };
       });
@@ -2055,7 +2180,7 @@ function loadOrdersFromSheets(){
           payMethod:o.PayMethod||o.payMethod||'CASH',
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
-          savedAt:o.SavedAt||o.savedAt||Date.now(),
+          savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
           cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
         };
       });
@@ -2067,6 +2192,40 @@ function loadOrdersFromSheets(){
     }
   })
   .catch(function(){});
+}
+
+// Force clear local orders and reload all from Sheets (fixes savedAt timestamps)
+function forceReloadOrders(){
+  if(!confirm('This will reload ALL orders from Google Sheets.\nLocal-only orders not in Sheets will be lost.\nContinue?')) return;
+  toast('Reloading all orders from Sheets\u2026');
+  gsGet('getOrders').then(function(res){
+    if(!res||!res.ok||!res.data||!res.data.length){
+      toast('\u26a0\ufe0f No orders found in Sheets','err');return;
+    }
+    orders=res.data.map(function(o){
+      return{
+        invNo:parseInt(o.InvNo||o.invNo)||0,
+        date:o.Date||o.date||'',
+        time:o.Time||o.time||'',
+        custName:o.CustName||o.custName||'',
+        custPhone:o.CustPhone||o.custPhone||'',
+        staffName:o.Staff||o.staffName||'',
+        subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
+        discount:parseFloat(o.Discount||o.discount)||0,
+        gst:parseFloat(o.GST||o.gst)||0,
+        total:parseFloat(o.Total||o.total)||0,
+        payMethod:o.PayMethod||o.payMethod||'CASH',
+        notes:o.Notes||o.notes||'',
+        status:o.Status||o.status||'delivered',
+        savedAt:parseSavedAt(o.Date||o.date, o.Time||o.time, o.SavedAt||o.savedAt),
+        cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+      };
+    });
+    orders.sort(function(a,b){return b.invNo-a.invNo;});
+    S.s('orders',orders);
+    toast('\u2705 Reloaded '+orders.length+' orders from Sheets!','ok');
+    renderOrders();
+  }).catch(function(e){toast('\u274c Error: '+e.message,'err');});
 }
 
 // ── INIT ──
