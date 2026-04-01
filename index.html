@@ -842,6 +842,47 @@ function syncAllData(){
   runNext();
 }
 
+function debugSheetsConnection(){
+  var out=document.getElementById('debugOut');
+  if(!out)return;
+  out.style.display='block';
+  out.textContent='Testing connection...\n';
+  // Test getAll
+  gsGet('getAll').then(function(res){
+    out.textContent='=== getAll response ===\n';
+    out.textContent+='ok: '+res.ok+'\n';
+    if(res.data){
+      var d=res.data;
+      out.textContent+='keys: '+Object.keys(d).join(', ')+'\n';
+      out.textContent+='menu count: '+(d.menu?d.menu.length:'MISSING')+'\n';
+      out.textContent+='cats count: '+(d.cats?d.cats.length:'MISSING')+'\n';
+      out.textContent+='orders count: '+(d.orders?d.orders.length:'MISSING ❌')+'\n';
+      if(d.ordersError) out.textContent+='orders ERROR: '+d.ordersError+' ❌\n';
+      out.textContent+='staff count: '+(d.staff?d.staff.length:'MISSING')+'\n';
+      if(d.orders&&d.orders.length>0){
+        out.textContent+='\n=== First order from Sheets ===\n';
+        out.textContent+=JSON.stringify(d.orders[0],null,2).substring(0,400);
+      }
+    }else{
+      out.textContent+='ERROR: '+JSON.stringify(res).substring(0,300);
+    }
+    // Also test getOrders separately
+    return gsGet('getOrders');
+  }).then(function(res2){
+    if(!res2)return;
+    out.textContent+='\n\n=== getOrders response ===\n';
+    out.textContent+='ok: '+res2.ok+'\n';
+    out.textContent+='orders count: '+(res2.data?res2.data.length:'0 or error')+'\n';
+    if(res2.data&&res2.data.length>0){
+      out.textContent+='\nFirst order keys: '+Object.keys(res2.data[0]).join(', ')+'\n';
+      out.textContent+='First order sample:\n'+JSON.stringify(res2.data[0],null,2).substring(0,400);
+    }
+    out.textContent+='\n\nLocal orders in memory: '+orders.length;
+  }).catch(function(e){
+    out.textContent+='\nFetch error: '+e.message;
+  });
+}
+
 function setSyncStatus(s){syncStatus=s;var el=document.getElementById('syncDot');if(!el)return;var colors={idle:'#8A7A5A',syncing:'#3A7AC0',ok:'#4A9A5A',err:'#C05040'};var labels={idle:'\u25cf',syncing:'\u21bb',ok:'\u2713',err:'\u2715'};el.style.color=colors[s]||'#8A7A5A';el.textContent=labels[s]||'\u25cf';el.title=s==='ok'?'Synced to Sheets':s==='err'?'Sync failed':s==='syncing'?'Syncing\u2026':'Click to sync Google Sheets';}
 function saveSheetUrl(){toast('\u2705 URL is hardcoded in the app','ok');syncAllData();}
 
@@ -1302,7 +1343,11 @@ function renderSettings(){document.getElementById('admBody').innerHTML=`<div cla
   <button class="btn-o" onclick="forceReloadOrders()">\ud83d\udd04 Reload Orders</button>
   <button class="btn-o" onclick="setSyncStatus('idle')">Reset</button>
 </div>
-<div style="margin-top:8px;font-size:10px;color:var(--muted)">Status: <span id="syncStatusTxt">${syncStatus}</span></div></div></div>
+<div style="margin-top:8px;font-size:10px;color:var(--muted)">Status: <span id="syncStatusTxt">${syncStatus}</span></div>
+<div style="margin-top:10px">
+  <button class="btn-o" style="width:100%;margin-bottom:6px" onclick="debugSheetsConnection()">🔍 Debug: Test Sheets Connection</button>
+  <div id="debugOut" style="display:none;background:#111;border:1px solid var(--border);border-radius:7px;padding:10px;font-size:10px;color:#4A9A5A;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:6px"></div>
+</div></div></div>
 <div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udda8\ufe0f KOT Printer &mdash; KPC307-UEWB</div><div class="panel-bd">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
   <span style="font-size:11px;color:var(--muted)">Status:</span>
@@ -1978,16 +2023,16 @@ function toast(msg,type=''){const w=document.getElementById('toastW');const t=do
 // ── STARTUP: Load all data from Google Sheets ──
 function loadFromSheets(onDone){
   setSyncStatus('syncing');
-  // Try getAll first (new Apps Script)
-  // If fails, fall back to individual calls (old Apps Script)
   gsGet('getAll')
   .then(function(res){
+    console.log('DAWAT getAll raw response:', JSON.stringify(res).substring(0,500));
     if(!res||!res.ok||!res.data){
-      // getAll not supported — try individual calls
       console.log('DAWAT: getAll failed, trying individual calls');
       return loadFromSheetsIndividual(onDone);
     }
     var d=res.data;
+    console.log('DAWAT getAll keys:', Object.keys(d));
+    console.log('DAWAT orders from getAll:', d.orders ? d.orders.length : 'MISSING');
 
     // ── Menu items ──
     if(d.menu&&d.menu.length>0){
@@ -2230,8 +2275,9 @@ function forceReloadOrders(){
   if(!confirm('This will reload ALL orders from Google Sheets.\nLocal-only orders not in Sheets will be lost.\nContinue?')) return;
   toast('Reloading all orders from Sheets\u2026');
   gsGet('getOrders').then(function(res){
+    console.log('DAWAT forceReload getOrders response:', JSON.stringify(res).substring(0,800));
     if(!res||!res.ok||!res.data||!res.data.length){
-      toast('\u26a0\ufe0f No orders found in Sheets','err');return;
+      toast('\u26a0\ufe0f No orders found in Sheets - res: '+JSON.stringify(res).substring(0,100),'err');return;
     }
     orders=res.data.map(function(o){
       return{
