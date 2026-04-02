@@ -602,7 +602,7 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
       <button class="print-all" onclick="doPrint('all')">🖨 Print Bill + KOT</button>
       <div class="psubs">
         <button class="psub cust-btn" onclick="doPrint('customer')"><span class="psub-icon">🧾</span>Customer<br><span style="font-size:8px;opacity:.7">Billing Printer</span></button>
-        <button class="psub chef-btn" onclick="doPrint('kitchen')"><span class="psub-icon">👨‍🍳</span>Chef<br><span style="font-size:8px;opacity:.7">Kitchen Printer</span></button>
+
         
       </div>
       <button class="wa-btn" onclick="sendWhatsApp()">💬 WhatsApp Receipt</button>
@@ -962,7 +962,7 @@ function sendWhatsApp(){
   const custName=d.custName?'\n\ud83d\udc64 *'+d.custName+'*':'';
 
   // Item lines with rate
-  const itemLines=d.cart.map(i=>{
+  const itemLines=(d.cart||[]).map(i=>{
     const name=(i.name+'                    ').substring(0,20);
     return '  '+String(i.qty).padStart(2)+'x '+name+' \u20b9'+(i.price*i.qty).toFixed(0);
   }).join('\n');
@@ -1072,8 +1072,8 @@ function doPrint(type){
 }
 function closePrint(){document.getElementById('printModal').classList.remove('show');if(lastPrintSnap){setTimeout(()=>{if(confirm('\u2705 Order #'+lastPrintSnap.invNo+' printed!\n\nStart a new order?')){lastPrintSnap=null;newOrder();}},200);}}
 
-function custSlip(d){const rows=d.cart.map(i=>`<tr><td>${i.name}${i.note?`<br><i style="font-size:8px;color:#777">${i.note}</i>`:''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">\u20b9${i.price}</td><td style="text-align:right">\u20b9${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');return`<div class="rcpt"><div class="rl cust">Customer Receipt</div><div class="rb"><h2>${shop.name}</h2><p>${shop.tagline}<br>${shop.address}${shop.phone?'<br>'+shop.phone:''}</p></div><hr><div class="rmeta"><span>Inv: <b>#${d.invNo}</b></span><span>Date: ${d.date}</span><span>Time: ${d.time}</span><span>Pay: ${d.payMethod}</span><span>Staff: ${d.staffName||'\u2014'}</span>${d.custName?`<span style="grid-column:span 2">Name: ${d.custName}</span>`:''}${d.custPhone?`<span style="grid-column:span 2">Ph: ${d.custPhone}</span>`:''}</div><hr><table><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amt</th></tr>${rows}</table><hr><table><tr><td>Subtotal</td><td style="text-align:right">\u20b9${d.subtotal.toFixed(2)}</td></tr>${d.discount>0?`<tr><td>Discount${d.discType==='pct'?` (${d.discVal}%)`:''}</td><td style="text-align:right;color:green">-\u20b9${d.discount.toFixed(2)}</td></tr>`:''}${d.loyaltyRedeem>0?`<tr><td>\ud83c\udf81 Points Redeem</td><td style="text-align:right;color:purple">-\u20b9${d.loyaltyRedeem.toFixed(2)}</td></tr>`:''}${d.gst>0?`<tr><td>GST (${d.gstPct}%)</td><td style="text-align:right">\u20b9${d.gst.toFixed(2)}</td></tr>`:''}<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9${d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="text-align:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="rfoot">PARCEL / TAKEAWAY<br>${shop.footer}</div></div>`;}
-function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 Kitchen Copy</div><div class="rb"><h2>${shop.name}</h2></div><hr><div class="rmeta"><span>Token: <b>#${d.invNo}</b></span><span>Time: <b>${d.time}</b></span></div><hr>${d.cart.map(i=>`<div style="border-bottom:1px dashed #ccc;padding:4px 0"><div class="item-b">${i.name}</div><div class="item-qr">QTY: ${i.qty}</div>${i.note?`<div style="font-size:9px;color:#8B0000;font-weight:700">\u26a0\ufe0f ${i.note}</div>`:''}</div>`).join('')}${d.notes?`<div class="rnote">\u26a0\ufe0f ${d.notes}</div>`:''}<hr><div style="text-align:center;font-size:10px">TAKEAWAY \u00b7 PARCEL</div></div>`;}
+function custSlip(d){const rows=(d.cart||[]).map(i=>`<tr><td>${i.name}${i.note?`<br><i style="font-size:8px;color:#777">${i.note}</i>`:''}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">\u20b9${i.price}</td><td style="text-align:right">\u20b9${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');return`<div class="rcpt"><div class="rl cust">Customer Receipt</div><div class="rb"><h2>${shop.name}</h2><p>${shop.tagline}<br>${shop.address}${shop.phone?'<br>'+shop.phone:''}</p></div><hr><div class="rmeta"><span>Inv: <b>#${d.invNo}</b></span><span>Date: ${d.date}</span><span>Time: ${d.time}</span><span>Pay: ${d.payMethod}</span><span>Staff: ${d.staffName||'\u2014'}</span>${d.custName?`<span style="grid-column:span 2">Name: ${d.custName}</span>`:''}${d.custPhone?`<span style="grid-column:span 2">Ph: ${d.custPhone}</span>`:''}</div><hr><table><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amt</th></tr>${rows}</table><hr><table><tr><td>Subtotal</td><td style="text-align:right">\u20b9${d.subtotal.toFixed(2)}</td></tr>${d.discount>0?`<tr><td>Discount${d.discType==='pct'?` (${d.discVal}%)`:''}</td><td style="text-align:right;color:green">-\u20b9${d.discount.toFixed(2)}</td></tr>`:''}${d.loyaltyRedeem>0?`<tr><td>\ud83c\udf81 Points Redeem</td><td style="text-align:right;color:purple">-\u20b9${d.loyaltyRedeem.toFixed(2)}</td></tr>`:''}${d.gst>0?`<tr><td>GST (${d.gstPct}%)</td><td style="text-align:right">\u20b9${d.gst.toFixed(2)}</td></tr>`:''}<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9${d.total.toFixed(2)}</b></td></tr><tr><td>${d.payMethod}</td><td style="text-align:right">\u20b9${d.total.toFixed(2)}</td></tr></table>${d.notes?`<div class="rnote">\ud83d\udcdd ${d.notes}</div>`:''}<hr><div class="rfoot">PARCEL / TAKEAWAY<br>${shop.footer}</div></div>`;}
+function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 Kitchen Copy</div><div class="rb"><h2>${shop.name}</h2></div><hr><div class="rmeta"><span>Token: <b>#${d.invNo}</b></span><span>Time: <b>${d.time}</b></span></div><hr>${(d.cart||[]).map(i=>`<div style="border-bottom:1px dashed #ccc;padding:4px 0"><div class="item-b">${i.name}</div><div class="item-qr">QTY: ${i.qty}</div>${i.note?`<div style="font-size:9px;color:#8B0000;font-weight:700">\u26a0\ufe0f ${i.note}</div>`:''}</div>`).join('')}${d.notes?`<div class="rnote">\u26a0\ufe0f ${d.notes}</div>`:''}<hr><div style="text-align:center;font-size:10px">TAKEAWAY \u00b7 PARCEL</div></div>`;}
 
 function newOrder(){if(cart.length&&!confirm('Clear order?'))return;lastPrintSnap=null;cart=[];loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;['custName','custPhone','ordNotes','tendAmt','splitCash','splitUpi','splitCard'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('discVal').value='0';document.getElementById('gstChk').checked=false;document.querySelectorAll('.pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
 
@@ -1083,7 +1083,7 @@ function advanceToken(displayIdx,status){let list=orders.filter(o=>['pending','c
 function clearDelivered(){orders.forEach(o=>{if(o.status==='delivered')o.status='archived';});saveAll();renderTokens();}
 function reprintToken(displayIdx){let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status)||(!o.status&&sd(o.savedAt).getTime()>Date.now()-3600000*8));const o=list[displayIdx];if(!o)return;document.getElementById('slipsWrap').innerHTML=chefSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 
-function renderOrders(){const q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}`.toLowerCase().includes(q)));const today=new Date().toDateString();const tO=orders.filter(o=>sd(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9${orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map((o,i)=>{const st=o.status||'pending';const stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};return`<div class="oc"><div class="oc-hd"><span class="oc-inv">INV #${o.invNo}</span><span style="font-size:9px;color:${stColor[st]};font-weight:700">${st.toUpperCase()}</span><span class="oc-tm">${sd(o.savedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>${o.custName?`<div style="font-size:10px;margin-bottom:3px">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''} ${o.staffName?'\u00b7 \ud83d\udc64'+o.staffName:''}</div>`:''}<div class="oc-items">${o.cart.map(c=>c.name+' \u00d7'+c.qty).join(', ')}</div><div class="oc-tot">\u20b9${o.total.toFixed(2)}</div><div class="oc-pay">${o.payMethod}${o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):''}</div><div class="oc-acts"><button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprint(${i})">\ud83d\udda8 Print</button><button class="btn-d" onclick="delOrder(${i})">\u2715</button></div></div>`;}).join('')||'<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';}
+function renderOrders(){const q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}`.toLowerCase().includes(q)));const today=new Date().toDateString();const tO=orders.filter(o=>sd(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9${orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map((o,i)=>{const st=o.status||'pending';const stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};return`<div class="oc"><div class="oc-hd"><span class="oc-inv">INV #${o.invNo}</span><span style="font-size:9px;color:${stColor[st]};font-weight:700">${st.toUpperCase()}</span><span class="oc-tm">${sd(o.savedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>${o.custName?`<div style="font-size:10px;margin-bottom:3px">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''} ${o.staffName?'\u00b7 \ud83d\udc64'+o.staffName:''}</div>`:''}<div class="oc-items">${(o.cart||[]).map(c=>c.name+' \u00d7'+c.qty).join(', ')}</div><div class="oc-tot">\u20b9${o.total.toFixed(2)}</div><div class="oc-pay">${o.payMethod}${o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):''}</div><div class="oc-acts"><button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprint(${i})">\ud83d\udda8 Print</button><button class="btn-d" onclick="delOrder(${i})">\u2715</button></div></div>`;}).join('')||'<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';}
 function reprint(i){const o=orders[i];document.getElementById('slipsWrap').innerHTML=custSlip(o)+chefSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 function delOrder(i){if(!confirm('Delete?'))return;orders.splice(i,1);S.s('orders',orders);renderOrders();}
 function clearHistory(){if(!confirm('Delete ALL history?'))return;orders=[];S.s('orders',orders);renderOrders();}
@@ -1132,12 +1132,12 @@ function fmtTime(t){
 function sd(savedAt){var d=new Date(savedAt||0);return isNaN(d.getTime())?new Date(0):d;}
 function sdISO(savedAt){return sd(savedAt).toISOString();}
 function sdStr(savedAt){var d=sd(savedAt);if(!d.getTime())return '1970-01-01';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function renderDaily(){const body=document.getElementById('rptBody');const today=sdStr(Date.now());const sel=window._rptD||today;const dO=orders.filter(o=>sdStr(o.savedAt)===sel);const rev=dO.reduce((s,o)=>s+o.total,0),disc=dO.reduce((s,o)=>s+o.discount,0),gst=dO.reduce((s,o)=>s+(o.gst||0),0);const bars7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const ds=sdStr(d.getTime());const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{lbl:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,date:ds};});const mx=Math.max(...bars7.map(b=>b.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="date" value="${sel}" onchange="window._rptD=this.value;renderReport()" max="${today}" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="rpt-tab active" onclick="window._rptD='${today}';renderReport()">Today</button><button class="btn-o" onclick="exportDailyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${dO.length}</div></div><div class="kpi"><div class="kpi-lbl">Net Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">GST</div><div class="kpi-val">${fmt(gst)}</div></div><div class="kpi"><div class="kpi-lbl">Avg Order</div><div class="kpi-val">${dO.length?fmt(rev/dO.length):'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcb5 Cash</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcf1 UPI</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">Items Sold</div><div class="kpi-val">${dO.reduce((s,o)=>s+o.cart.reduce((a,c)=>a+c.qty,0),0)}</div></div></div><div class="chart-box"><div class="chart-title">Last 7 Days</div><div class="bar-chart">${bars7.map(b=>`<div class="bar-w"><div class="bar" style="height:${Math.max(3,(b.rev/mx)*120)}px" onclick="window._rptD='${b.date}';renderReport()"><span class="bar-tip">${fmt(b.rev)} (${b.cnt})</span></div><div class="bar-lbl">${b.lbl}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Orders on ${sel}</div>${dO.length?`<table class="rpt-table"><tr><th>Inv</th><th>Time</th><th>Customer</th><th>Staff</th><th>Items</th><th>Pay</th><th>Disc</th><th>GST</th><th>Total</th></tr>${dO.map(o=>`<tr><td>#${o.invNo}</td><td>${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</td><td>${o.custName||'\u2014'}</td><td>${o.staffName||'\u2014'}</td><td style="max-width:140px;font-size:10px">${o.cart.map(c=>c.name+' \u00d7'+c.qty).join(', ')}</td><td>${o.payMethod}</td><td style="color:var(--green)">${o.discount>0?'-\u20b9'+o.discount.toFixed(0):'\u2014'}</td><td>${(o.gst||0)>0?'\u20b9'+(o.gst||0).toFixed(0):'\u2014'}</td><td class="money">\u20b9${o.total.toFixed(2)}</td></tr>`).join('')}</table>`:'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No orders</div>'}</div>`;}
+function renderDaily(){const body=document.getElementById('rptBody');const today=sdStr(Date.now());const sel=window._rptD||today;const dO=orders.filter(o=>sdStr(o.savedAt)===sel);const rev=dO.reduce((s,o)=>s+o.total,0),disc=dO.reduce((s,o)=>s+o.discount,0),gst=dO.reduce((s,o)=>s+(o.gst||0),0);const bars7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const ds=sdStr(d.getTime());const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{lbl:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,date:ds};});const mx=Math.max(...bars7.map(b=>b.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="date" value="${sel}" onchange="window._rptD=this.value;renderReport()" max="${today}" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="rpt-tab active" onclick="window._rptD='${today}';renderReport()">Today</button><button class="btn-o" onclick="exportDailyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${dO.length}</div></div><div class="kpi"><div class="kpi-lbl">Net Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">GST</div><div class="kpi-val">${fmt(gst)}</div></div><div class="kpi"><div class="kpi-lbl">Avg Order</div><div class="kpi-val">${dO.length?fmt(rev/dO.length):'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcb5 Cash</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcf1 UPI</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">Items Sold</div><div class="kpi-val">${dO.reduce((s,o)=>s+((o.cart||[]).reduce((a,c)=>a+c.qty,0)),0)}</div></div></div><div class="chart-box"><div class="chart-title">Last 7 Days</div><div class="bar-chart">${bars7.map(b=>`<div class="bar-w"><div class="bar" style="height:${Math.max(3,(b.rev/mx)*120)}px" onclick="window._rptD='${b.date}';renderReport()"><span class="bar-tip">${fmt(b.rev)} (${b.cnt})</span></div><div class="bar-lbl">${b.lbl}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Orders on ${sel}</div>${dO.length?`<table class="rpt-table"><tr><th>Inv</th><th>Time</th><th>Customer</th><th>Staff</th><th>Items</th><th>Pay</th><th>Disc</th><th>GST</th><th>Total</th></tr>${dO.map(o=>`<tr><td>#${o.invNo}</td><td>${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</td><td>${o.custName||'\u2014'}</td><td>${o.staffName||'\u2014'}</td><td style="max-width:140px;font-size:10px">${(o.cart||[]).map(c=>c.name+' \u00d7'+c.qty).join(', ')}</td><td>${o.payMethod}</td><td style="color:var(--green)">${o.discount>0?'-\u20b9'+o.discount.toFixed(0):'\u2014'}</td><td>${(o.gst||0)>0?'\u20b9'+(o.gst||0).toFixed(0):'\u2014'}</td><td class="money">\u20b9${o.total.toFixed(2)}</td></tr>`).join('')}</table>`:'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No orders</div>'}</div>`;}
 function renderMonthly(){const body=document.getElementById('rptBody');const now=new Date();const defM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const sel=window._rptM||defM;const [yr,mo]=sel.split('-').map(Number);const mO=orders.filter(o=>{const d=sd(o.savedAt);return d.getFullYear()===yr&&d.getMonth()+1===mo;});const rev=mO.reduce((s,o)=>s+o.total,0),disc=mO.reduce((s,o)=>s+o.discount,0);const days=new Date(yr,mo,0).getDate();const dayData=Array.from({length:days},(_,i)=>{const ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(i+1).padStart(2,'0');const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{d:i+1,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length};});const mx=Math.max(...dayData.map(d=>d.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="month" value="${sel}" onchange="window._rptM=this.value;renderReport()" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="btn-o" onclick="exportMonthlyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${mO.length}</div></div><div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">Best Day</div><div class="kpi-val">${dayData.reduce((b,d)=>d.rev>b.rev?d:b,{rev:0,d:0}).d||'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">Active Days</div><div class="kpi-val">${dayData.filter(d=>d.cnt>0).length}/${days}</div></div><div class="kpi"><div class="kpi-lbl">Avg/Order</div><div class="kpi-val">${mO.length?fmt(rev/mO.length):'\u2014'}</div></div></div><div class="chart-box"><div class="chart-title">${mnN[mo-1]} ${yr} \u2014 Daily</div><div class="bar-chart">${dayData.map(d=>`<div class="bar-w"><div class="bar" style="height:${Math.max(2,(d.rev/mx)*120)}px;width:${days>20?'18px':'26px'}"><span class="bar-tip">${d.d}: ${fmt(d.rev)}</span></div><div class="bar-lbl" style="font-size:7px">${d.d}</div></div>`).join('')}</div></div>`;}
 function renderYearly(){const body=document.getElementById('rptBody');const now=new Date();const sel=window._rptY||now.getFullYear();const yO=orders.filter(o=>sd(o.savedAt).getFullYear()===sel);const rev=yO.reduce((s,o)=>s+o.total,0),disc=yO.reduce((s,o)=>s+o.discount,0);const mData=mnN.map((mn,i)=>{const os=yO.filter(o=>sd(o.savedAt).getMonth()===i);return{mn,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,disc:os.reduce((s,o)=>s+o.discount,0)};});const mx=Math.max(...mData.map(d=>d.rev),1);const allYrs=orders.map(function(o){return sd(o.savedAt).getFullYear();}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort((a,b)=>b-a);if(!allYrs.includes(sel))allYrs.unshift(sel);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px"><select onchange="window._rptY=+this.value;renderReport()" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none">${allYrs.map(y=>`<option ${y===sel?'selected':''}>${y}</option>`).join('')}</select><button class="btn-o" onclick="exportYearlyCsv(${sel})">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${yO.length}</div></div><div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">Best Month</div><div class="kpi-val">${mData.reduce((b,m)=>m.rev>b.rev?m:b,{rev:0,mn:'\u2014'}).mn}</div></div><div class="kpi"><div class="kpi-lbl">Monthly Avg</div><div class="kpi-val">${fmt(rev/12)}</div></div><div class="kpi"><div class="kpi-lbl">Active Months</div><div class="kpi-val">${mData.filter(m=>m.cnt>0).length}/12</div></div></div><div class="chart-box"><div class="chart-title">Monthly Revenue ${sel}</div><div class="bar-chart">${mData.map(m=>`<div class="bar-w"><div class="bar" style="height:${Math.max(2,(m.rev/mx)*120)}px;width:28px"><span class="bar-tip">${m.mn}: ${fmt(m.rev)}</span></div><div class="bar-lbl">${m.mn}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Month Breakdown</div><table class="rpt-table"><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Discounts</th><th>Avg</th></tr>${mData.map(m=>`<tr><td>${m.mn} ${sel}</td><td>${m.cnt}</td><td class="money">${fmt(m.rev)}</td><td style="color:var(--green)">${m.disc>0?'-\u20b9'+m.disc.toFixed(0):'\u2014'}</td><td>${m.cnt?fmt(m.rev/m.cnt):'\u2014'}</td></tr>`).join('')}</table></div>`;}
-function renderTopItems(){const body=document.getElementById('rptBody');const iMap={};orders.forEach(o=>o.cart.forEach(c=>{if(!iMap[c.name])iMap[c.name]={name:c.name,qty:0,rev:0,orders:0};iMap[c.name].qty+=c.qty;iMap[c.name].rev+=c.price*c.qty;iMap[c.name].orders++;}));const items=Object.values(iMap).sort((a,b)=>b.rev-a.rev);const totRev=items.reduce((s,i)=>s+i.rev,0);body.innerHTML=`<div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Unique Items</div><div class="kpi-val">${items.length}</div></div><div class="kpi"><div class="kpi-lbl">Top Item</div><div class="kpi-val" style="font-size:13px">${items.length?items[0].name:'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">Total Qty</div><div class="kpi-val">${items.reduce((s,i)=>s+i.qty,0)}</div></div><div class="kpi"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val">${fmt(totRev)}</div></div></div><div class="panel"><div class="panel-hd">\ud83c\udfc6 Top Items by Revenue</div>${items.map((it,i)=>`<div class="top-item"><div class="ti-rank">${i+1}</div><div style="flex:1"><div style="font-size:12px;font-weight:600">${it.name}</div><div style="font-size:10px;color:var(--muted)">${it.qty} sold \u00b7 ${it.orders} orders</div><div class="ti-bar" style="width:${Math.round((it.rev/totRev)*100)}%;max-width:100%"></div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--gold)">${fmt(it.rev)}</div><div style="font-size:9px;color:var(--muted)">${Math.round((it.rev/totRev)*100)}%</div></div></div>`).join('')||'<div style="padding:20px;text-align:center;color:var(--muted)">No data</div>'}</div>`;}
+function renderTopItems(){const body=document.getElementById('rptBody');const iMap={};orders.forEach(o=>(o.cart||[]).forEach(c=>{if(!iMap[c.name])iMap[c.name]={name:c.name,qty:0,rev:0,orders:0};iMap[c.name].qty+=c.qty;iMap[c.name].rev+=c.price*c.qty;iMap[c.name].orders++;}));const items=Object.values(iMap).sort((a,b)=>b.rev-a.rev);const totRev=items.reduce((s,i)=>s+i.rev,0);body.innerHTML=`<div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Unique Items</div><div class="kpi-val">${items.length}</div></div><div class="kpi"><div class="kpi-lbl">Top Item</div><div class="kpi-val" style="font-size:13px">${items.length?items[0].name:'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">Total Qty</div><div class="kpi-val">${items.reduce((s,i)=>s+i.qty,0)}</div></div><div class="kpi"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val">${fmt(totRev)}</div></div></div><div class="panel"><div class="panel-hd">\ud83c\udfc6 Top Items by Revenue</div>${items.map((it,i)=>`<div class="top-item"><div class="ti-rank">${i+1}</div><div style="flex:1"><div style="font-size:12px;font-weight:600">${it.name}</div><div style="font-size:10px;color:var(--muted)">${it.qty} sold \u00b7 ${it.orders} orders</div><div class="ti-bar" style="width:${Math.round((it.rev/totRev)*100)}%;max-width:100%"></div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--gold)">${fmt(it.rev)}</div><div style="font-size:9px;color:var(--muted)">${Math.round((it.rev/totRev)*100)}%</div></div></div>`).join('')||'<div style="padding:20px;text-align:center;color:var(--muted)">No data</div>'}</div>`;}
 function renderStaffReport(){const body=document.getElementById('rptBody');const today=new Date().toDateString();body.innerHTML=`<div class="panel"><div class="panel-hd">\ud83d\udc65 Staff Performance</div><table class="rpt-table"><tr><th>Staff</th><th>Role</th><th>Today Orders</th><th>Today Rev</th><th>Total Orders</th><th>Total Rev</th><th>Avg Order</th></tr>${staffList.map(s=>{const all=orders.filter(o=>o.staffId===s.id);const tod=all.filter(o=>sd(o.savedAt).toDateString()===today);const tR=tod.reduce((a,o)=>a+o.total,0);const aR=all.reduce((a,o)=>a+o.total,0);return`<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${tod.length}</td><td class="money">${fmt(tR)}</td><td>${all.length}</td><td class="money">${fmt(aR)}</td><td>${all.length?fmt(aR/all.length):'\u2014'}</td></tr>`;}).join('')}</table></div>`;}
-function exportDailyCsv(d){let c='Inv,Time,Customer,Phone,Staff,Items,Subtotal,Discount,GST,Total,Payment\n';orders.filter(o=>sdStr(o.savedAt)===d).forEach(o=>{c+=`#${o.invNo},${sd(o.savedAt).toLocaleTimeString()},"${o.custName||''}","${o.custPhone||''}","${o.staffName||''}","${o.cart.map(c=>c.name+' x'+c.qty).join('; ')}",${o.subtotal},${o.discount},${(o.gst||0).toFixed(2)},${o.total},${o.payMethod}\n`;});dlCsv(c,'dawat_daily_'+d+'.csv');}
+function exportDailyCsv(d){let c='Inv,Time,Customer,Phone,Staff,Items,Subtotal,Discount,GST,Total,Payment\n';orders.filter(o=>sdStr(o.savedAt)===d).forEach(o=>{c+=`#${o.invNo},${sd(o.savedAt).toLocaleTimeString()},"${o.custName||''}","${o.custPhone||''}","${o.staffName||''}","${(o.cart||[]).map(c=>c.name+' x'+c.qty).join('; ')}",${o.subtotal},${o.discount},${(o.gst||0).toFixed(2)},${o.total},${o.payMethod}\n`;});dlCsv(c,'dawat_daily_'+d+'.csv');}
 function exportMonthlyCsv(m){const[yr,mo]=m.split('-').map(Number);let c='Inv,Date,Customer,Staff,Subtotal,Discount,Net\n';orders.filter(o=>{const d=sd(o.savedAt);return d.getFullYear()===yr&&d.getMonth()+1===mo;}).forEach(o=>{c+=`#${o.invNo},${sd(o.savedAt).toLocaleDateString()},"${o.custName||''}","${o.staffName||''}",${o.subtotal},${o.discount},${o.total}\n`;});dlCsv(c,'dawat_monthly_'+m+'.csv');}
 function exportYearlyCsv(y){let c='Month,Orders,Gross,Discounts,Net\n';mnN.forEach((mn,i)=>{const os=orders.filter(o=>sd(o.savedAt).getFullYear()===y&&sd(o.savedAt).getMonth()===i);const r=os.reduce((s,o)=>s+o.total,0);const d=os.reduce((s,o)=>s+o.discount,0);c+=`${mn} ${y},${os.length},${(r+d).toFixed(2)},${d.toFixed(2)},${r.toFixed(2)}\n`;});dlCsv(c,'dawat_yearly_'+y+'.csv');}
 function dlCsv(csv,fn){const b=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;a.click();URL.revokeObjectURL(u);toast('Downloaded!');}
@@ -1610,14 +1610,17 @@ var kotPrinter={
       const bytes=this.textToBytes(text);
       // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        const chunkSize=100;
+        // Use 512 byte chunks (BLE MTU) with 150ms delay to prevent mid-cut
+        const chunkSize=512;
         const useNoResp=this.characteristic.properties.writeWithoutResponse;
         for(let i=0;i<bytes.length;i+=chunkSize){
           const chunk=bytes.slice(i,i+chunkSize);
           if(useNoResp)await this.characteristic.writeValueWithoutResponse(chunk);
           else await this.characteristic.writeValue(chunk);
-          if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,80));
+          if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,150));
         }
+        // Extra wait after last chunk before printer processes cut command
+        await new Promise(r=>setTimeout(r,300));
       }
       // WebUSB (WinUSB driver via Zadig)
       else if(this.type==='usb'&&this.device){
@@ -1653,7 +1656,7 @@ var kotPrinter={
     const ESC=0x1B,GS=0x1D;
     const init    = [ESC,0x40];
     const cut     = [GS,0x56,0x41,0x05];
-    const feed    = [ESC,0x64,0x04]; // feed 4 lines before cut
+    const feed    = [ESC,0x64,0x06]; // feed 6 lines before cut so paper clears blade
     const center  = [ESC,0x61,0x01];
     const left    = [ESC,0x61,0x00];
     const bold_on = [ESC,0x45,0x01];
@@ -1860,7 +1863,7 @@ function custSlip_text(d){
   lines.push(DIV);
 
   // ── Qty + Gross Total ──
-  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  const totalQty=(d.cart||[]).reduce(function(s,i){return s+i.qty;},0);
   lines.push(pad('    Qty: '+totalQty,28)+rpad(d.subtotal.toFixed(0),14));
   lines.push(pad('Gross Total',28)+rpad(d.subtotal.toFixed(0),14));
   lines.push(DIV);
@@ -1926,7 +1929,7 @@ function chefSlip_text(d){
   const kitLines=d.cart.map(function(i){
     return'  '+String(i.qty).padStart(2)+'x  '+i.name+(i.note?'\n       >> '+i.note:'');
   }).join('\n');
-  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  const totalQty=(d.cart||[]).reduce(function(s,i){return s+i.qty;},0);
   return [
     '======  KITCHEN KOT  ======',
     'Token: #'+d.invNo,
@@ -1977,7 +1980,7 @@ async function sendKOT(d){
     if(item.note) custLines2.push('    >> '+item.note);
   });
   custLines2.push(DIV);
-  const totalQty2=d.cart.reduce(function(s,i){return s+i.qty;},0);
+  const totalQty2=(d.cart||[]).reduce(function(s,i){return s+i.qty;},0);
   custLines2.push(pad('    Qty: '+totalQty2,28)+rpad(d.subtotal.toFixed(0),14));
   custLines2.push(pad('Gross Total',28)+rpad(d.subtotal.toFixed(0),14));
   custLines2.push(DIV);
@@ -2016,29 +2019,6 @@ async function sendKOT(d){
   const custText=custLines2.join('\n');
 
   await kotPrinter.print(custText);
-
-  // Gap between slips
-  await new Promise(r=>setTimeout(r,1200));
-
-  // ── SLIP 2: Kitchen KOT ──
-  const kitDiv='-'.repeat(W);
-  const kitLines=d.cart.map(i=>'  '+String(i.qty).padStart(2)+'x  '+i.name+(i.note?'\n       >> '+i.note:'')).join('\n');
-  const totalQty=d.cart.reduce(function(s,i){return s+i.qty;},0);
-  const kotText=[
-    '======  KITCHEN KOT  ======',
-    'Token: #'+d.invNo,
-    'Date:  '+d.date+'   Time: '+d.time,
-    'Type:  TAKEAWAY',
-    d.staffName?'Staff: '+d.staffName:'',
-    kitDiv,
-    '  Qty   Item',
-    kitDiv,
-    kitLines,
-    kitDiv,
-    'Total Items: '+totalQty,
-    d.notes?'\n*** NOTE: '+d.notes+' ***':'',
-  ].filter(Boolean).join('\n');
-  await kotPrinter.print(kotText,false); // false = no logo on KOT
 }
 async function testPrint(){
   const SEP='------------------------------------------\n';
@@ -2133,7 +2113,12 @@ function loadFromSheets(onDone){
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
           savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+          cart:(function(){
+            var c=o.Cart||o.cart||'[]';
+            if(Array.isArray(c))return c;
+            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+            return [];
+          })(),
         };
       });
       orders=localOnly.concat(newFromSheets);
@@ -2245,7 +2230,12 @@ function loadFromSheetsIndividual(onDone){
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
           savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+          cart:(function(){
+            var c=o.Cart||o.cart||'[]';
+            if(Array.isArray(c))return c;
+            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+            return [];
+          })(),
         };
       });
       if(mapped.length>0){
@@ -2287,7 +2277,12 @@ function loadOrdersFromSheets(){
           notes:o.Notes||o.notes||'',
           status:o.Status||o.status||'delivered',
           savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+          cart:(function(){
+            var c=o.Cart||o.cart||'[]';
+            if(Array.isArray(c))return c;
+            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+            return [];
+          })(),
         };
       });
       orders=orders.concat(mapped);
@@ -2325,7 +2320,12 @@ function forceReloadOrders(){
         notes:o.Notes||o.notes||'',
         status:o.Status||o.status||'delivered',
         savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-        cart:typeof o.Cart==='string'?JSON.parse(o.Cart||'[]'):(o.cart||[]),
+        cart:(function(){
+            var c=o.Cart||o.cart||'[]';
+            if(Array.isArray(c))return c;
+            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+            return [];
+          })(),
       };
     });
     orders.sort(function(a,b){return b.invNo-a.invNo;});
