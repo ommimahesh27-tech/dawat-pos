@@ -2091,40 +2091,17 @@ function loadFromSheets(onDone){
       invNo=parseInt(d.invNo);
       S.s('invNo',invNo);
     }
-    // ── Orders (now included in getAll) ──
+    // ── Orders (from getAll) ──
     if(d.orders&&d.orders.length>0){
-      // Always use Sheets as source of truth — replace local orders that exist in Sheets
       var sheetsInvNos=new Set(d.orders.map(function(o){return parseInt(o.InvNo||o.invNo)||0;}));
-      // Keep only local orders NOT in Sheets (truly local-only)
       var localOnly=orders.filter(function(o){return !sheetsInvNos.has(o.invNo);});
-      var newFromSheets=d.orders.map(function(o){
-        return{
-          invNo:parseInt(o.InvNo||o.invNo)||0,
-          date:o.Date||o.date||'',
-          time:fmtTime(o.Time||o.time||''),
-          custName:o.CustName||o.custName||'',
-          custPhone:o.CustPhone||o.custPhone||'',
-          staffName:o.Staff||o.staffName||'',
-          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
-          discount:parseFloat(o.Discount||o.discount)||0,
-          gst:parseFloat(o.GST||o.gst)||0,
-          total:parseFloat(o.Total||o.total)||0,
-          payMethod:o.PayMethod||o.payMethod||'CASH',
-          notes:o.Notes||o.notes||'',
-          status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:(function(){
-            var c=o.Cart||o.cart||'[]';
-            if(Array.isArray(c))return c;
-            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
-            return [];
-          })(),
-        };
-      });
-      orders=localOnly.concat(newFromSheets);
+      var fromSheets=d.orders.map(mapOrder);
+      orders=localOnly.concat(fromSheets);
       orders.sort(function(a,b){return b.invNo-a.invNo;});
       S.s('orders',orders);
-      console.log('DAWAT: merged '+newFromSheets.length+' orders from Sheets, '+localOnly.length+' local-only');
+      console.log('DAWAT: orders loaded='+fromSheets.length+' localOnly='+localOnly.length);
+      // Debug: log first order savedAt
+      if(fromSheets.length>0){console.log('First order savedAt='+fromSheets[0].savedAt+' date='+sdStr(fromSheets[0].savedAt)+' invNo='+fromSheets[0].invNo);}
     }
 
     setSyncStatus('ok');
@@ -2176,6 +2153,38 @@ function parseSavedAt(savedAt, dateStr, timeStr){
   return Date.now();
 }
 
+// ── Single order mapper used everywhere ──
+function mapOrder(o){
+  var savedAt=o.SavedAt||o.savedAt;
+  // savedAt from Sheets is a number (unix ms) — use directly if valid
+  var ts=(typeof savedAt==='number'&&savedAt>1000000000000)?savedAt:
+         (typeof savedAt==='string'&&parseFloat(savedAt)>1000000000000)?parseFloat(savedAt):
+         parseSavedAt(savedAt, o.Date||o.date, o.Time||o.time);
+  var cart=(function(){
+    var c=o.Cart||o.cart;
+    if(Array.isArray(c))return c;
+    if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+    return [];
+  })();
+  return{
+    invNo:parseInt(o.InvNo||o.invNo)||0,
+    date:String(o.Date||o.date||''),
+    time:fmtTime(String(o.Time||o.time||'')),
+    custName:String(o.CustName||o.custName||''),
+    custPhone:String(o.CustPhone||o.custPhone||''),
+    staffName:String(o.Staff||o.staffName||''),
+    subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
+    discount:parseFloat(o.Discount||o.discount)||0,
+    gst:parseFloat(o.GST||o.gst)||0,
+    total:parseFloat(o.Total||o.total)||0,
+    payMethod:String(o.PayMethod||o.payMethod||'CASH'),
+    notes:String(o.Notes||o.notes||''),
+    status:String(o.Status||o.status||'delivered'),
+    savedAt:ts,
+    cart:cart,
+  };
+}
+
 // Fallback: load each sheet individually (for old Apps Script)
 function loadFromSheetsIndividual(onDone){
   var loaded=0;
@@ -2215,28 +2224,7 @@ function loadFromSheetsIndividual(onDone){
       var mapped=res.data.filter(function(o){
         return !localInvNos.has(parseInt(o.InvNo||o.invNo));
       }).map(function(o){
-        return{
-          invNo:parseInt(o.InvNo||o.invNo)||0,
-          date:o.Date||o.date||'',
-          time:fmtTime(o.Time||o.time||''),
-          custName:o.CustName||o.custName||'',
-          custPhone:o.CustPhone||o.custPhone||'',
-          staffName:o.Staff||o.staffName||'',
-          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
-          discount:parseFloat(o.Discount||o.discount)||0,
-          gst:parseFloat(o.GST||o.gst)||0,
-          total:parseFloat(o.Total||o.total)||0,
-          payMethod:o.PayMethod||o.payMethod||'CASH',
-          notes:o.Notes||o.notes||'',
-          status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:(function(){
-            var c=o.Cart||o.cart||'[]';
-            if(Array.isArray(c))return c;
-            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
-            return [];
-          })(),
-        };
+        return mapOrder(o);
       });
       if(mapped.length>0){
         orders=orders.concat(mapped);
@@ -2262,28 +2250,7 @@ function loadOrdersFromSheets(){
     if(newOrders.length>0){
       // Map Sheets columns to app format
       var mapped=newOrders.map(function(o){
-        return{
-          invNo:parseInt(o.InvNo||o.invNo)||0,
-          date:o.Date||o.date||'',
-          time:fmtTime(o.Time||o.time||''),
-          custName:o.CustName||o.custName||'',
-          custPhone:o.CustPhone||o.custPhone||'',
-          staffName:o.Staff||o.staffName||'',
-          subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
-          discount:parseFloat(o.Discount||o.discount)||0,
-          gst:parseFloat(o.GST||o.gst)||0,
-          total:parseFloat(o.Total||o.total)||0,
-          payMethod:o.PayMethod||o.payMethod||'CASH',
-          notes:o.Notes||o.notes||'',
-          status:o.Status||o.status||'delivered',
-          savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-          cart:(function(){
-            var c=o.Cart||o.cart||'[]';
-            if(Array.isArray(c))return c;
-            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
-            return [];
-          })(),
-        };
+        return mapOrder(o);
       });
       orders=orders.concat(mapped);
       // Sort by invNo descending
