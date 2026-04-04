@@ -1042,25 +1042,22 @@ function doPrint(type){
 
   const d=lastPrintSnap;
 
-  // ── If BT/USB printer is connected → send directly, NO browser dialog ──
+  // ── If BT/USB printer is connected → sendKOT already handled it above ──
+  // Only re-print manually if user taps Customer button again after first print
   if(kotPrinter.isConnected()){
-    if(type==='all'||type==='customer'){
+    if(lastPrintSnap&&type==='customer'){
+      // Manual reprint request
       kotPrinter.print(custSlip_text(d));
+      toast('\u2705 Reprinting to printer...','ok');
+    }else{
+      // First print already done by sendKOT — just confirm and new order
+      toast('\u2705 Order #'+d.invNo+' printed!','ok');
     }
-    if(type==='all'){
-      // KOT already sent via sendKOT above on first print
-      // For manual re-print of kitchen:
-    }
-    if(type==='kitchen'){
-      kotPrinter.print(chefSlip_text(d),false);
-    }
-    toast('\u2705 Printed to '+( kotPrinter.type==='bluetooth'?'Bluetooth':'USB')+' printer!','ok');
-    // Ask new order after short delay
     setTimeout(function(){
-      if(confirm('\u2705 Order #'+d.invNo+' sent to printer!\n\nStart a new order?')){
+      if(confirm('\u2705 Order #'+d.invNo+' complete!\n\nStart a new order?')){
         lastPrintSnap=null;newOrder();
       }
-    },500);
+    },800);
     return;
   }
 
@@ -1077,13 +1074,13 @@ function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 
 
 function newOrder(){if(cart.length&&!confirm('Clear order?'))return;lastPrintSnap=null;cart=[];loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;['custName','custPhone','ordNotes','tendAmt','splitCash','splitUpi','splitCard'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('discVal').value='0';document.getElementById('gstChk').checked=false;document.querySelectorAll('.pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
 
-function renderTokens(){const grid=document.getElementById('tokenGrid');let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status));if(tokenFilter!=='all')list=list.filter(o=>o.status===tokenFilter);list=list.slice(0,40);if(!list.length){grid.innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">No active tokens</div>`;return;}grid.innerHTML=list.map((o,i)=>{const st=o.status||'pending';const badges={'pending':'\u23f3 Pending','cooking':'\ud83d\udd25 Cooking','ready':'\u2705 Ready','delivered':'\ud83d\udce6 Delivered'};const bClasses={'pending':'st-pending','cooking':'st-cooking','ready':'st-ready','delivered':'st-delivered'};return`<div class="token-card ${st}"><div class="tk-status-bar"></div><div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="tk-no">#${o.invNo}</div><span class="tk-status-badge ${bClasses[st]}">${badges[st]}</span></div>${o.custName?`<div class="tk-name">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''}</div>`:''}<div class="tk-items">${o.cart.map(c=>c.name+' \u00d7'+c.qty+(c.note?' ('+c.note+')':'')).join('<br>')}</div>${o.notes?`<div style="font-size:9px;color:var(--orange);margin-top:3px">\u26a0\ufe0f ${o.notes}</div>`:''}<div class="tk-time">${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</div><div class="tk-btns">${st==='pending'?`<button class="tk-btn advance" onclick="advanceToken(${i},'cooking')">\ud83d\udd25 Start Cooking</button>`:''}${st==='cooking'?`<button class="tk-btn advance" onclick="advanceToken(${i},'ready')">\u2705 Mark Ready</button>`:''}${st==='ready'?`<button class="tk-btn done" onclick="advanceToken(${i},'delivered')">\ud83d\udce6 Delivered</button>`:''}<button class="tk-btn" onclick="reprintToken(${o.invNo})">\ud83d\udda8</button></div></div>`;}).join('');}
+function renderTokens(){const grid=document.getElementById('tokenGrid');let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status));if(tokenFilter!=='all')list=list.filter(o=>o.status===tokenFilter);list=list.slice(0,40);if(!list.length){grid.innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">No active tokens</div>`;return;}grid.innerHTML=list.map((o,i)=>{const st=o.status||'pending';const badges={'pending':'\u23f3 Pending','cooking':'\ud83d\udd25 Cooking','ready':'\u2705 Ready','delivered':'\ud83d\udce6 Delivered'};const bClasses={'pending':'st-pending','cooking':'st-cooking','ready':'st-ready','delivered':'st-delivered'};return`<div class="token-card ${st}"><div class="tk-status-bar"></div><div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="tk-no">#${o.invNo}</div><span class="tk-status-badge ${bClasses[st]}">${badges[st]}</span></div>${o.custName?`<div class="tk-name">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''}</div>`:''}<div class="tk-items">${(o.cart&&o.cart.length?(o.cart).map(c=>c.name+' \u00d7'+c.qty+(c.note?' ('+c.note+')':'')).join('<br>'):(o.itemsText||''))}</div>${o.notes?`<div style="font-size:9px;color:var(--orange);margin-top:3px">\u26a0\ufe0f ${o.notes}</div>`:''}<div class="tk-time">${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</div><div class="tk-btns">${st==='pending'?`<button class="tk-btn advance" onclick="advanceToken(${i},'cooking')">\ud83d\udd25 Start Cooking</button>`:''}${st==='cooking'?`<button class="tk-btn advance" onclick="advanceToken(${i},'ready')">\u2705 Mark Ready</button>`:''}${st==='ready'?`<button class="tk-btn done" onclick="advanceToken(${i},'delivered')">\ud83d\udce6 Delivered</button>`:''}<button class="tk-btn" onclick="reprintToken(${o.invNo})">\ud83d\udda8</button></div></div>`;}).join('');}
 function filterTokens(f,btn){tokenFilter=f;document.querySelectorAll('#tokenScrn .xs-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTokens();}
 function advanceToken(displayIdx,status){let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status));if(tokenFilter!=='all')list=list.filter(o=>o.status===tokenFilter);const o=list[displayIdx];if(!o)return;const realIdx=orders.indexOf(o);if(realIdx>=0)orders[realIdx].status=status;saveAll();renderTokens();toast('Token #'+o.invNo+' \u2192 '+status,'ok');}
 function clearDelivered(){orders.forEach(o=>{if(o.status==='delivered')o.status='archived';});saveAll();renderTokens();}
 function reprintToken(invNo){const o=orders.find(o=>o.invNo===invNo);if(!o)return;document.getElementById('slipsWrap').innerHTML=chefSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 
-function renderOrders(){const q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}`.toLowerCase().includes(q)));const today=new Date().toDateString();const tO=orders.filter(o=>sd(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9${orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map((o,i)=>{const st=o.status||'pending';const stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};return`<div class="oc"><div class="oc-hd"><span class="oc-inv">INV #${o.invNo}</span><span style="font-size:9px;color:${stColor[st]};font-weight:700">${st.toUpperCase()}</span><span class="oc-tm">${sd(o.savedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>${o.custName?`<div style="font-size:10px;margin-bottom:3px">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''} ${o.staffName?'\u00b7 \ud83d\udc64'+o.staffName:''}</div>`:''}<div class="oc-items">${(o.cart||[]).map(c=>c.name+' \u00d7'+c.qty).join(', ')}</div><div class="oc-tot">\u20b9${o.total.toFixed(2)}</div><div class="oc-pay">${o.payMethod}${o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):''}</div><div class="oc-acts"><button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprint(${i})">\ud83d\udda8 Print</button><button class="btn-d" onclick="delOrder(${i})">\u2715</button></div></div>`;}).join('')||'<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';}
+function renderOrders(){const q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();let list=orders.filter(o=>o.status!=='archived'&&(!q||`${o.invNo} ${o.custName||''} ${o.custPhone||''}`.toLowerCase().includes(q)));const today=new Date().toDateString();const tO=orders.filter(o=>sd(o.savedAt).toDateString()===today);document.getElementById('sumBar').innerHTML=`<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">${tO.length}</div></div><div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9${tO.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div><div class="sum-c"><div class="sum-lbl">Total Orders</div><div class="sum-val">${orders.length}</div></div><div class="sum-c"><div class="sum-lbl">Total Revenue</div><div class="sum-val">\u20b9${orders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map((o,i)=>{const st=o.status||'pending';const stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};return`<div class="oc"><div class="oc-hd"><span class="oc-inv">INV #${o.invNo}</span><span style="font-size:9px;color:${stColor[st]};font-weight:700">${st.toUpperCase()}</span><span class="oc-tm">${sd(o.savedAt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>${o.custName?`<div style="font-size:10px;margin-bottom:3px">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''} ${o.staffName?'\u00b7 \ud83d\udc64'+o.staffName:''}</div>`:''}<div class="oc-items">${(o.cart&&o.cart.length?(o.cart).map(c=>c.name+' \u00d7'+c.qty).join(', '):(o.itemsText||'\u2014'))}</div><div class="oc-tot">\u20b9${o.total.toFixed(2)}</div><div class="oc-pay">${o.payMethod}${o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):''}</div><div class="oc-acts"><button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprint(${i})">\ud83d\udda8 Print</button><button class="btn-d" onclick="delOrder(${i})">\u2715</button></div></div>`;}).join('')||'<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';}
 function reprint(i){const o=orders[i];document.getElementById('slipsWrap').innerHTML=custSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(()=>window.print(),350);}
 function delOrder(i){if(!confirm('Delete?'))return;orders.splice(i,1);S.s('orders',orders);renderOrders();}
 function clearHistory(){if(!confirm('Delete ALL history?'))return;orders=[];S.s('orders',orders);renderOrders();}
@@ -1132,7 +1129,7 @@ function fmtTime(t){
 function sd(savedAt){var d=new Date(savedAt||0);return isNaN(d.getTime())?new Date(0):d;}
 function sdISO(savedAt){return sd(savedAt).toISOString();}
 function sdStr(savedAt){var d=sd(savedAt);if(!d.getTime())return '1970-01-01';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function renderDaily(){const body=document.getElementById('rptBody');const today=sdStr(Date.now());const sel=window._rptD||today;const dO=orders.filter(o=>sdStr(o.savedAt)===sel);const rev=dO.reduce((s,o)=>s+o.total,0),disc=dO.reduce((s,o)=>s+o.discount,0),gst=dO.reduce((s,o)=>s+(o.gst||0),0);const bars7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const ds=sdStr(d.getTime());const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{lbl:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,date:ds};});const mx=Math.max(...bars7.map(b=>b.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="date" value="${sel}" onchange="window._rptD=this.value;renderReport()" max="${today}" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="rpt-tab active" onclick="window._rptD='${today}';renderReport()">Today</button><button class="btn-o" onclick="exportDailyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${dO.length}</div></div><div class="kpi"><div class="kpi-lbl">Net Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">GST</div><div class="kpi-val">${fmt(gst)}</div></div><div class="kpi"><div class="kpi-lbl">Avg Order</div><div class="kpi-val">${dO.length?fmt(rev/dO.length):'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcb5 Cash</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcf1 UPI</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">Items Sold</div><div class="kpi-val">${dO.reduce((s,o)=>s+((o.cart||[]).reduce((a,c)=>a+(parseInt(c.qty)||0),0)),0)}</div></div></div><div class="chart-box"><div class="chart-title">Last 7 Days</div><div class="bar-chart">${bars7.map(b=>`<div class="bar-w"><div class="bar" style="height:${Math.max(3,(b.rev/mx)*120)}px" onclick="window._rptD='${b.date}';renderReport()"><span class="bar-tip">${fmt(b.rev)} (${b.cnt})</span></div><div class="bar-lbl">${b.lbl}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Orders on ${sel}</div>${dO.length?`<table class="rpt-table"><tr><th>Inv</th><th>Time</th><th>Customer</th><th>Staff</th><th>Items</th><th>Pay</th><th>Disc</th><th>GST</th><th>Total</th></tr>${dO.map(o=>`<tr><td>#${o.invNo}</td><td>${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</td><td>${o.custName||'\u2014'}</td><td>${o.staffName||'\u2014'}</td><td style="max-width:140px;font-size:10px">${(o.cart||[]).map(c=>c.name+' \u00d7'+c.qty).join(', ')}</td><td>${o.payMethod}</td><td style="color:var(--green)">${o.discount>0?'-\u20b9'+o.discount.toFixed(0):'\u2014'}</td><td>${(o.gst||0)>0?'\u20b9'+(o.gst||0).toFixed(0):'\u2014'}</td><td class="money">\u20b9${o.total.toFixed(2)}</td></tr>`).join('')}</table>`:'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No orders</div>'}</div>`;}
+function renderDaily(){const body=document.getElementById('rptBody');const today=sdStr(Date.now());const sel=window._rptD||today;const dO=orders.filter(o=>sdStr(o.savedAt)===sel);const rev=dO.reduce((s,o)=>s+o.total,0),disc=dO.reduce((s,o)=>s+o.discount,0),gst=dO.reduce((s,o)=>s+(o.gst||0),0);const bars7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const ds=sdStr(d.getTime());const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{lbl:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,date:ds};});const mx=Math.max(...bars7.map(b=>b.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="date" value="${sel}" onchange="window._rptD=this.value;renderReport()" max="${today}" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="rpt-tab active" onclick="window._rptD='${today}';renderReport()">Today</button><button class="btn-o" onclick="exportDailyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${dO.length}</div></div><div class="kpi"><div class="kpi-lbl">Net Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">GST</div><div class="kpi-val">${fmt(gst)}</div></div><div class="kpi"><div class="kpi-lbl">Avg Order</div><div class="kpi-val">${dO.length?fmt(rev/dO.length):'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcb5 Cash</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='CASH').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">\ud83d\udcf1 UPI</div><div class="kpi-val">${fmt(dO.filter(o=>o.payMethod==='UPI').reduce((s,o)=>s+o.total,0))}</div></div><div class="kpi"><div class="kpi-lbl">Items Sold</div><div class="kpi-val">${dO.reduce((s,o)=>s+((o.cart||[]).reduce((a,c)=>a+(parseInt(c.qty)||0),0)),0)}</div></div></div><div class="chart-box"><div class="chart-title">Last 7 Days</div><div class="bar-chart">${bars7.map(b=>`<div class="bar-w"><div class="bar" style="height:${Math.max(3,(b.rev/mx)*120)}px" onclick="window._rptD='${b.date}';renderReport()"><span class="bar-tip">${fmt(b.rev)} (${b.cnt})</span></div><div class="bar-lbl">${b.lbl}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Orders on ${sel}</div>${dO.length?`<table class="rpt-table"><tr><th>Inv</th><th>Time</th><th>Customer</th><th>Staff</th><th>Items</th><th>Pay</th><th>Disc</th><th>GST</th><th>Total</th></tr>${dO.map(o=>`<tr><td>#${o.invNo}</td><td>${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</td><td>${o.custName||'\u2014'}</td><td>${o.staffName||'\u2014'}</td><td style="max-width:140px;font-size:10px">${(o.cart&&o.cart.length?(o.cart).map(c=>c.name+' \u00d7'+c.qty).join(', '):(o.itemsText||'\u2014'))}</td><td>${o.payMethod}</td><td style="color:var(--green)">${o.discount>0?'-\u20b9'+o.discount.toFixed(0):'\u2014'}</td><td>${(o.gst||0)>0?'\u20b9'+(o.gst||0).toFixed(0):'\u2014'}</td><td class="money">\u20b9${o.total.toFixed(2)}</td></tr>`).join('')}</table>`:'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No orders</div>'}</div>`;}
 function renderMonthly(){const body=document.getElementById('rptBody');const now=new Date();const defM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const sel=window._rptM||defM;const [yr,mo]=sel.split('-').map(Number);const mO=orders.filter(o=>{const d=sd(o.savedAt);return d.getFullYear()===yr&&d.getMonth()+1===mo;});const rev=mO.reduce((s,o)=>s+o.total,0),disc=mO.reduce((s,o)=>s+o.discount,0);const days=new Date(yr,mo,0).getDate();const dayData=Array.from({length:days},(_,i)=>{const ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(i+1).padStart(2,'0');const os=orders.filter(o=>sdStr(o.savedAt)===ds);return{d:i+1,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length};});const mx=Math.max(...dayData.map(d=>d.rev),1);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><input type="month" value="${sel}" onchange="window._rptM=this.value;renderReport()" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none"><button class="btn-o" onclick="exportMonthlyCsv('${sel}')">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${mO.length}</div></div><div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">Best Day</div><div class="kpi-val">${dayData.reduce((b,d)=>d.rev>b.rev?d:b,{rev:0,d:0}).d||'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">Active Days</div><div class="kpi-val">${dayData.filter(d=>d.cnt>0).length}/${days}</div></div><div class="kpi"><div class="kpi-lbl">Avg/Order</div><div class="kpi-val">${mO.length?fmt(rev/mO.length):'\u2014'}</div></div></div><div class="chart-box"><div class="chart-title">${mnN[mo-1]} ${yr} \u2014 Daily</div><div class="bar-chart">${dayData.map(d=>`<div class="bar-w"><div class="bar" style="height:${Math.max(2,(d.rev/mx)*120)}px;width:${days>20?'18px':'26px'}"><span class="bar-tip">${d.d}: ${fmt(d.rev)}</span></div><div class="bar-lbl" style="font-size:7px">${d.d}</div></div>`).join('')}</div></div>`;}
 function renderYearly(){const body=document.getElementById('rptBody');const now=new Date();const sel=window._rptY||now.getFullYear();const yO=orders.filter(o=>sd(o.savedAt).getFullYear()===sel);const rev=yO.reduce((s,o)=>s+o.total,0),disc=yO.reduce((s,o)=>s+o.discount,0);const mData=mnN.map((mn,i)=>{const os=yO.filter(o=>sd(o.savedAt).getMonth()===i);return{mn,rev:os.reduce((s,o)=>s+o.total,0),cnt:os.length,disc:os.reduce((s,o)=>s+o.discount,0)};});const mx=Math.max(...mData.map(d=>d.rev),1);const allYrs=orders.map(function(o){return sd(o.savedAt).getFullYear();}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort((a,b)=>b-a);if(!allYrs.includes(sel))allYrs.unshift(sel);body.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:14px"><select onchange="window._rptY=+this.value;renderReport()" style="background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none">${allYrs.map(y=>`<option ${y===sel?'selected':''}>${y}</option>`).join('')}</select><button class="btn-o" onclick="exportYearlyCsv(${sel})">\u2b07 CSV</button></div><div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Orders</div><div class="kpi-val">${yO.length}</div></div><div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val">${fmt(rev)}</div></div><div class="kpi"><div class="kpi-lbl">Discounts</div><div class="kpi-val" style="color:var(--green)">${fmt(disc)}</div></div><div class="kpi"><div class="kpi-lbl">Best Month</div><div class="kpi-val">${mData.reduce((b,m)=>m.rev>b.rev?m:b,{rev:0,mn:'\u2014'}).mn}</div></div><div class="kpi"><div class="kpi-lbl">Monthly Avg</div><div class="kpi-val">${fmt(rev/12)}</div></div><div class="kpi"><div class="kpi-lbl">Active Months</div><div class="kpi-val">${mData.filter(m=>m.cnt>0).length}/12</div></div></div><div class="chart-box"><div class="chart-title">Monthly Revenue ${sel}</div><div class="bar-chart">${mData.map(m=>`<div class="bar-w"><div class="bar" style="height:${Math.max(2,(m.rev/mx)*120)}px;width:28px"><span class="bar-tip">${m.mn}: ${fmt(m.rev)}</span></div><div class="bar-lbl">${m.mn}</div></div>`).join('')}</div></div><div class="panel" style="overflow-x:auto"><div class="panel-hd">Month Breakdown</div><table class="rpt-table"><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Discounts</th><th>Avg</th></tr>${mData.map(m=>`<tr><td>${m.mn} ${sel}</td><td>${m.cnt}</td><td class="money">${fmt(m.rev)}</td><td style="color:var(--green)">${m.disc>0?'-\u20b9'+m.disc.toFixed(0):'\u2014'}</td><td>${m.cnt?fmt(m.rev/m.cnt):'\u2014'}</td></tr>`).join('')}</table></div>`;}
 function renderTopItems(){const body=document.getElementById('rptBody');const iMap={};orders.forEach(o=>(o.cart||[]).forEach(c=>{if(!iMap[c.name])iMap[c.name]={name:c.name,qty:0,rev:0,orders:0};iMap[c.name].qty+=c.qty;iMap[c.name].rev+=c.price*c.qty;iMap[c.name].orders++;}));const items=Object.values(iMap).sort((a,b)=>b.rev-a.rev);const totRev=items.reduce((s,i)=>s+i.rev,0);body.innerHTML=`<div class="rpt-kpis"><div class="kpi"><div class="kpi-lbl">Unique Items</div><div class="kpi-val">${items.length}</div></div><div class="kpi"><div class="kpi-lbl">Top Item</div><div class="kpi-val" style="font-size:13px">${items.length?items[0].name:'\u2014'}</div></div><div class="kpi"><div class="kpi-lbl">Total Qty</div><div class="kpi-val">${items.reduce((s,i)=>s+i.qty,0)}</div></div><div class="kpi"><div class="kpi-lbl">Total Revenue</div><div class="kpi-val">${fmt(totRev)}</div></div></div><div class="panel"><div class="panel-hd">\ud83c\udfc6 Top Items by Revenue</div>${items.map((it,i)=>`<div class="top-item"><div class="ti-rank">${i+1}</div><div style="flex:1"><div style="font-size:12px;font-weight:600">${it.name}</div><div style="font-size:10px;color:var(--muted)">${it.qty} sold \u00b7 ${it.orders} orders</div><div class="ti-bar" style="width:${Math.round((it.rev/totRev)*100)}%;max-width:100%"></div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--gold)">${fmt(it.rev)}</div><div style="font-size:9px;color:var(--muted)">${Math.round((it.rev/totRev)*100)}%</div></div></div>`).join('')||'<div style="padding:20px;text-align:center;color:var(--muted)">No data</div>'}</div>`;}
@@ -1610,17 +1607,27 @@ var kotPrinter={
       const bytes=this.textToBytes(text);
       // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        // Use 512 byte chunks (BLE MTU) with 150ms delay to prevent mid-cut
-        const chunkSize=512;
+        const chunkSize=200; // Safe BLE chunk size for KPC307
         const useNoResp=this.characteristic.properties.writeWithoutResponse;
         for(let i=0;i<bytes.length;i+=chunkSize){
           const chunk=bytes.slice(i,i+chunkSize);
-          if(useNoResp)await this.characteristic.writeValueWithoutResponse(chunk);
-          else await this.characteristic.writeValue(chunk);
-          if(i+chunkSize<bytes.length)await new Promise(r=>setTimeout(r,150));
+          // Retry each chunk up to 3 times on GATT error
+          let sent=false;
+          for(let attempt=0;attempt<3;attempt++){
+            try{
+              if(useNoResp)await this.characteristic.writeValueWithoutResponse(chunk);
+              else await this.characteristic.writeValue(chunk);
+              sent=true;
+              break;
+            }catch(gattErr){
+              console.warn('BLE chunk attempt '+(attempt+1)+' failed:',gattErr.message);
+              if(attempt<2)await new Promise(r=>setTimeout(r,300*(attempt+1)));
+            }
+          }
+          if(!sent)throw new Error('BLE chunk failed after 3 attempts');
+          // 100ms between chunks, 600ms after last chunk (lets cut command process)
+          await new Promise(r=>setTimeout(r,i+chunkSize>=bytes.length?600:100));
         }
-        // Extra wait after last chunk before printer processes cut command
-        await new Promise(r=>setTimeout(r,300));
       }
       // WebUSB (WinUSB driver via Zadig)
       else if(this.type==='usb'&&this.device){
@@ -2091,6 +2098,7 @@ function loadFromSheets(onDone){
       invNo=parseInt(d.invNo);
       S.s('invNo',invNo);
     }
+    window._mapOrderDebug=true; // debug first order cart
     // ── Orders (from getAll) ──
     if(d.orders&&d.orders.length>0){
       var sheetsInvNos=new Set(d.orders.map(function(o){return parseInt(o.InvNo||o.invNo)||0;}));
@@ -2155,6 +2163,8 @@ function parseSavedAt(savedAt, dateStr, timeStr){
 
 // ── Single order mapper used everywhere ──
 function mapOrder(o){
+  // Debug: log cart field for first order
+  if(window._mapOrderDebug){console.log('mapOrder cart field:',typeof (o.Cart||o.cart),(o.Cart||'').substring?((o.Cart||'').substring(0,80)):'[array]');window._mapOrderDebug=false;}
   var savedAt=o.SavedAt||o.savedAt;
   // savedAt from Sheets is a number (unix ms) — use directly if valid
   var ts=(typeof savedAt==='number'&&savedAt>1000000000000)?savedAt:
@@ -2166,6 +2176,20 @@ function mapOrder(o){
     if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
     return [];
   })();
+  // Items text column — readable fallback when cart JSON is unavailable
+  var itemsText=String(o.Items||o.items||'');
+  // If cart is empty but Items text exists, build minimal cart objects from it
+  if(cart.length===0&&itemsText){
+    cart=itemsText.split(',').map(function(part){
+      part=part.trim();
+      // Format: "Chicken Biryani x2" or "1x Chicken Biryani @Rs.150"
+      var m=part.match(/^(.+?)\s+x(\d+)$/i)||part.match(/^(\d+)x\s+(.+?)(?:\s+@.*)?$/i);
+      if(m){
+        return{name:m[1].trim()||m[2].trim(),qty:parseInt(m[2]||m[1])||1,price:0,id:'',note:''};
+      }
+      return{name:part,qty:1,price:0,id:'',note:''};
+    }).filter(function(i){return i.name;});
+  }
   return{
     invNo:parseInt(o.InvNo||o.invNo)||0,
     date:String(o.Date||o.date||''),
@@ -2182,6 +2206,7 @@ function mapOrder(o){
     status:String(o.Status||o.status||'delivered'),
     savedAt:ts,
     cart:cart,
+    itemsText:itemsText,
   };
 }
 
@@ -2271,30 +2296,7 @@ function forceReloadOrders(){
     if(!res||!res.ok||!res.data||!res.data.length){
       toast('\u26a0\ufe0f No orders found in Sheets - res: '+JSON.stringify(res).substring(0,100),'err');return;
     }
-    orders=res.data.map(function(o){
-      return{
-        invNo:parseInt(o.InvNo||o.invNo)||0,
-        date:o.Date||o.date||'',
-        time:fmtTime(o.Time||o.time||''),
-        custName:o.CustName||o.custName||'',
-        custPhone:o.CustPhone||o.custPhone||'',
-        staffName:o.Staff||o.staffName||'',
-        subtotal:parseFloat(o.Subtotal||o.subtotal)||0,
-        discount:parseFloat(o.Discount||o.discount)||0,
-        gst:parseFloat(o.GST||o.gst)||0,
-        total:parseFloat(o.Total||o.total)||0,
-        payMethod:o.PayMethod||o.payMethod||'CASH',
-        notes:o.Notes||o.notes||'',
-        status:o.Status||o.status||'delivered',
-        savedAt:parseSavedAt(o.SavedAt||o.savedAt, o.Date||o.date, o.Time||o.time),
-        cart:(function(){
-            var c=o.Cart||o.cart||'[]';
-            if(Array.isArray(c))return c;
-            if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
-            return [];
-          })(),
-      };
-    });
+    orders=res.data.map(mapOrder);
     orders.sort(function(a,b){return b.invNo-a.invNo;});
     S.s('orders',orders);
     toast('\u2705 Reloaded '+orders.length+' orders from Sheets!','ok');
