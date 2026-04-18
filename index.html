@@ -1142,9 +1142,9 @@ function dlCsv(csv,fn){const b=new Blob([csv],{type:'text/csv'});const u=URL.cre
 function showAdmTab(t,btn){admTab=t;document.querySelectorAll('.adm-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderAdm();}
 function renderAdm(){if(admTab==='cats')renderCatAdm();else if(admTab==='items')renderItemAdm();else if(admTab==='loyalty')renderLoyaltyAdm();else renderSettings();}
 function renderCatAdm(){document.getElementById('admBody').innerHTML=`<div style="display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:14px"><div class="panel"><div class="panel-hd">Add Category</div><div class="panel-bd"><div class="fg"><label>Emoji</label><input id="cEm" value="\ud83c\udf7d" maxlength="2" style="width:56px;font-size:18px;text-align:center"></div><div class="fg"><label>Name</label><input id="cNm" placeholder="e.g. Desserts"></div><button class="btn-g" onclick="addCat()">+ Add</button></div></div><div class="panel"><div class="panel-hd">All Categories (${cats.length})</div><div id="catList"></div></div></div>`;document.getElementById('catList').innerHTML=cats.map((c,i)=>`<div class="lst-itm"><span style="font-size:18px">${c.emoji}</span><div style="flex:1"><div style="font-size:12px;font-weight:600">${c.name}</div><div style="font-size:10px;color:var(--muted)">${menuItems.filter(m=>m.catId===c.id).length} items</div></div><div class="li-acts"><button class="btn-e" onclick="editCat(${i})">Edit</button><button class="btn-d" onclick="delCat('${c.id}')">Del</button></div></div>`).join('');}
-function addCat(){const nm=document.getElementById('cNm').value.trim();const em=document.getElementById('cEm').value.trim()||'\ud83c\udf7d';if(!nm){toast('Enter name','err');return;}cats.push({id:'c'+Date.now(),name:nm,emoji:em});saveAll();renderCatAdm();renderCatTabs();document.getElementById('cNm').value='';toast('Added!');}
-function editCat(i){const c=cats[i];const nm=prompt('Name:',c.name);if(!nm)return;const em=prompt('Emoji:',c.emoji)||c.emoji;cats[i]=Object.assign({},c,{name:nm.trim(),emoji:em});saveAll();renderCatAdm();renderCatTabs();renderMenuGrid();}
-function delCat(id){const cnt=menuItems.filter(m=>m.catId===id).length;if(cnt&&!confirm(cnt+' items will be uncategorised. Delete?'))return;cats=cats.filter(c=>c.id!==id);saveAll();renderCatAdm();renderCatTabs();}
+function addCat(){const nm=document.getElementById('cNm').value.trim();const em=document.getElementById('cEm').value.trim()||'\ud83c\udf7d';if(!nm){toast('Enter name','err');return;}cats.push({id:'c'+Date.now(),name:nm,emoji:em});saveAll();renderCatAdm();renderCatTabs();document.getElementById('cNm').value='';gsPost('syncCategories',cats).then(function(r){toast(r&&r.ok?'\u2705 Category saved!':'\u26a0\ufe0f Saved locally (Sheets sync failed)');}).catch(function(){toast('\u26a0\ufe0f Saved locally (no internet)');});}
+function editCat(i){const c=cats[i];const nm=prompt('Name:',c.name);if(!nm)return;const em=prompt('Emoji:',c.emoji)||c.emoji;cats[i]=Object.assign({},c,{name:nm.trim(),emoji:em});saveAll();renderCatAdm();renderCatTabs();renderMenuGrid();gsPost('syncCategories',cats).catch(function(){});toast('\u2705 Category updated!');}
+function delCat(id){const cnt=menuItems.filter(m=>m.catId===id).length;if(cnt&&!confirm(cnt+' items will be uncategorised. Delete?'))return;cats=cats.filter(c=>c.id!==id);saveAll();renderCatAdm();renderCatTabs();gsPost('syncCategories',cats).catch(function(){});toast('\u2705 Category deleted!');}
 function renderItemAdm(){document.getElementById('admBody').innerHTML=`
 <div class="panel" style="margin-bottom:14px">
   <div class="panel-hd">Add / Edit Item</div>
@@ -1246,7 +1246,9 @@ function saveItem(){
     menuItems.push(newItem);
   }
   saveAll();resetIF();renderItemTbl();renderMenuGrid();renderCatTabs();
-  toast('Item saved! \u2705','ok');
+  gsPost('syncMenu',menuItems).then(function(r){
+    toast(r&&r.ok?'\u2705 Item saved to Sheets!':'\u26a0\ufe0f Saved locally (Sheets sync failed)');
+  }).catch(function(){toast('\u26a0\ufe0f Saved locally (no internet)');});
 }
 function loadEdit(id){
   const item=menuItems.find(i=>i.id===id);if(!item)return;
@@ -1322,8 +1324,8 @@ function resetIF(){
   const fileInp=document.getElementById('iImgFile');
   if(fileInp)fileInp.value='';
 }
-function togAvail(id){const i=menuItems.find(x=>x.id===id);if(i){i.avail=!i.avail;saveAll();renderItemTbl();renderMenuGrid();}}
-function delItem2(id){if(!confirm('Delete?'))return;menuItems=menuItems.filter(i=>i.id!==id);saveAll();renderItemTbl();renderMenuGrid();}
+function togAvail(id){const i=menuItems.find(x=>x.id===id);if(i){i.avail=!i.avail;saveAll();renderItemTbl();renderMenuGrid();gsPost('syncMenu',menuItems).catch(function(){});}}
+function delItem2(id){if(!confirm('Delete?'))return;menuItems=menuItems.filter(i=>i.id!==id);saveAll();renderItemTbl();renderMenuGrid();gsPost('syncMenu',menuItems).catch(function(){});toast('\u2705 Item deleted!');}
 function renderLoyaltyAdm(){const body=document.getElementById('admBody');body.innerHTML=`<div class="panel" style="max-width:400px;margin-bottom:14px"><div class="panel-hd">\ud83c\udf81 Loyalty Settings</div><div class="panel-bd"><div class="fg"><label>Earn 1 Point per \u20b9</label><input id="lRate" type="number" value="${shop.loyaltyRate}" min="1"></div><div class="fg"><label>Points needed to redeem \u20b91</label><input id="lRedeem" type="number" value="${shop.loyaltyRedeemPer}" min="1"></div><button class="btn-g" onclick="saveLoyaltySettings()">\ud83d\udcbe Save</button></div></div><div class="panel"><div class="panel-hd">\ud83d\udc65 Loyalty Members (${loyaltyDb.length})<button class="btn-o" onclick="exportLoyaltyCsv()">\u2b07 CSV</button></div><div class="loyalty-customers">${loyaltyDb.sort((a,b)=>b.points-a.points).map(c=>`<div class="lc-card"><div class="lc-name">${c.name}</div><div class="lc-phone">\ud83d\udcde ${c.phone}</div><div class="lc-pts">${c.points}<span style="font-size:11px;font-weight:400"> pts</span></div><div class="lc-visits">\ud83d\uded2 ${c.visits} visits</div><div style="display:flex;gap:5px;margin-top:7px"><button class="btn-o" style="font-size:9px" onclick="editLoyaltyPts('${c.id}')">Edit Points</button><button class="btn-d" onclick="delLoyalty('${c.id}')">Del</button></div></div>`).join('')||'<div style="padding:20px;color:var(--muted);font-size:11px">No loyalty members yet</div>'}</div></div>`;}
 function saveLoyaltySettings(){shop.loyaltyRate=parseInt(document.getElementById('lRate').value)||10;shop.loyaltyRedeemPer=parseInt(document.getElementById('lRedeem').value)||100;saveAll();toast('Loyalty settings saved!','ok');}
 function editLoyaltyPts(id){const c=loyaltyDb.find(x=>x.id===id);if(!c)return;const v=parseInt(prompt('Set points for '+c.name+':',c.points));if(isNaN(v))return;c.points=v;saveAll();renderLoyaltyAdm();toast('Updated!');}
@@ -1414,7 +1416,7 @@ function saveSettings(){
     adminPin:document.getElementById('sPin').value||shop.adminPin,
     logo:logoData
   };
-  saveAll();kotPrinter.processLogo();toast('Settings saved!','ok');syncAllData();
+  saveAll();kotPrinter.processLogo();gsPost('saveSettings',shop).then(function(r){toast(r&&r.ok?'\u2705 Settings saved to Sheets!':'\u26a0\ufe0f Saved locally');}).catch(function(){toast('\u26a0\ufe0f Saved locally');});
 }
 function handleLogoUpload(input){
   const file=input.files[0];if(!file)return;
