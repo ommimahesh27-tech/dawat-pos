@@ -1133,7 +1133,7 @@ function sendWhatsApp(){
   const url='https://wa.me/91'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
-function buildSnap(){const now=new Date();return{invNo,date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'}),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}),custName:document.getElementById('custName').value||'',custPhone:document.getElementById('custPhone').value||'',notes:document.getElementById('ordNotes').value||'',cart:cart.map(function(c){return Object.assign({},c);}),subtotal:getSub(),discount:getDisc(),loyaltyRedeem:loyaltyRedeemAmt,gst:getGst(),gstPct:parseFloat((document.getElementById('gstPct')?document.getElementById('gstPct').value:0))||0,gstEnabled:(document.getElementById('gstChk')?document.getElementById('gstChk').checked:false)||false,total:getTotal(),payMethod,discType,discVal:parseFloat((document.getElementById('discVal')?document.getElementById('discVal').value:0))||0,savedAt:Date.now(),staffId:currentStaff.id,staffName:currentStaff.name,status:'pending'};}
+function buildSnap(){const now=new Date();return{invNo,date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'}),time:now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}),custName:document.getElementById('custName').value||'',custPhone:document.getElementById('custPhone').value||'',notes:document.getElementById('ordNotes').value||'',cart:cart.map(function(c){return Object.assign({},c);}),subtotal:getSub(),discount:getDisc(),loyaltyRedeem:loyaltyRedeemAmt,gst:getGst(),gstPct:parseFloat((document.getElementById('gstPct')?document.getElementById('gstPct').value:0))||0,gstEnabled:(document.getElementById('gstChk')?document.getElementById('gstChk').checked:false)||false,total:getTotal(),payMethod,discType,discVal:parseFloat((document.getElementById('discVal')?document.getElementById('discVal').value:0))||0,savedAt:Date.now(),staffId:currentStaff.id,staffName:currentStaff.name,status:'delivered'};}
 
 var lastPrintSnap=null;
 function doPrint(type){
@@ -1198,20 +1198,32 @@ function chefSlip(d){return`<div class="rcpt"><div class="rl chef">\ud83d\udd25 
 
 function newOrder(){if(cart.length&&!confirm('Clear order?'))return;lastPrintSnap=null;cart=[];loyaltyRedeemAmt=0;loyaltyFoundCustomer=null;['custName','custPhone','ordNotes','tendAmt','splitCash','splitUpi','splitCard'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});document.getElementById('discVal').value='0';document.getElementById('gstChk').checked=false;document.querySelectorAll('.pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));payMethod='CASH';discType='flat';document.getElementById('dtFlat').classList.add('active');document.getElementById('dtPct').classList.remove('active');document.getElementById('dtFree').classList.remove('active');document.getElementById('tendRow').style.display='flex';document.getElementById('splitSec').style.display='none';document.getElementById('loyaltyBar').style.display='none';renderCart();closeMobCart();}
 
-// Robust items display helper — tries all sources
+// Robust items display helper — tries ALL sources
 function getItemsStr(o){
-  // 1. Try cart array (best source)
-  if(o.cart&&o.cart.length){
-    return o.cart.map(function(c){
-      return (c.name||'?')+' ×'+(c.qty||1);
+  // 1. Try parsed cart array (best)
+  if(o.cart&&Array.isArray(o.cart)&&o.cart.length){
+    return o.cart.map(function(ci){
+      return (ci.name||'Item')+' ×'+(ci.qty||1);
     }).join(', ');
   }
-  // 2. Try itemsText (set by mapOrder from Sheets Items column)
-  var it=String(o.itemsText||o.Items||o.items||'').trim();
-  if(it&&it!=='undefined'&&it!=='null') return it;
+  // 2. Try itemsText (from mapOrder Sheets Items column)
+  var it=String(o.itemsText||'').trim();
+  if(it&&it!=='undefined'&&it!=='null'&&it!=='') return it;
+  // 3. Try raw Items / items field directly
+  var raw=String(o.Items||o.items||'').trim();
+  if(raw&&raw!=='undefined'&&raw!=='null'&&raw!=='') return raw;
+  // 4. Try parsing Cart string directly
+  var cartRaw=o.Cart||o.cart;
+  if(typeof cartRaw==='string'&&cartRaw.indexOf('[')>=0){
+    try{
+      var parsed=JSON.parse(cartRaw);
+      if(Array.isArray(parsed)&&parsed.length){
+        return parsed.map(function(ci){return (ci.name||'Item')+' ×'+(ci.qty||1);}).join(', ');
+      }
+    }catch(e){}
+  }
   return '—';
 }
-
 function renderTokens(){const grid=document.getElementById('tokenGrid');let list=orders.filter(o=>['pending','cooking','ready'].includes(o.status));if(tokenFilter!=='all')list=list.filter(o=>o.status===tokenFilter);list=list.slice(0,40);if(!list.length){grid.innerHTML=`<div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">No active tokens</div>`;return;}grid.innerHTML=list.map((o,i)=>{const st=o.status||'pending';const badges={'pending':'\u23f3 Pending','cooking':'\ud83d\udd25 Cooking','ready':'\u2705 Ready','delivered':'\ud83d\udce6 Delivered'};const bClasses={'pending':'st-pending','cooking':'st-cooking','ready':'st-ready','delivered':'st-delivered'};return`<div class="token-card ${st}"><div class="tk-status-bar"></div><div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="tk-no">#${o.invNo}</div><span class="tk-status-badge ${bClasses[st]}">${badges[st]}</span></div>${o.custName?`<div class="tk-name">\ud83d\udc64 ${o.custName}${o.custPhone?' \u00b7 '+o.custPhone:''}</div>`:''}<div class="tk-items">${(o.cart&&o.cart.length?(o.cart).map(c=>c.name+' \u00d7'+c.qty+(c.note?' ('+c.note+')':'')).join('<br>'):(o.itemsText||''))}</div>${o.notes?`<div style="font-size:9px;color:var(--orange);margin-top:3px">\u26a0\ufe0f ${o.notes}</div>`:''}<div class="tk-time">${(o.time||sd(o.savedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}))}</div><div class="tk-btns">${st==='pending'?`<button class="tk-btn advance" onclick="advanceToken(${o.invNo},'cooking')">\ud83d\udd25 Start Cooking</button>`:''}${st==='cooking'?`<button class="tk-btn advance" onclick="advanceToken(${o.invNo},'ready')">\u2705 Mark Ready</button>`:''}${st==='ready'?`<button class="tk-btn done" onclick="advanceToken(${o.invNo},'delivered')">\ud83d\udce6 Delivered</button>`:''}<button class="tk-btn" onclick="reprintToken(${o.invNo})">\ud83d\udda8</button></div></div>`;}).join('');}
 function filterTokens(f,btn){tokenFilter=f;document.querySelectorAll('#tokenScrn .xs-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTokens();}
 function advanceToken(invNo,status){
@@ -1292,6 +1304,7 @@ function renderOrders(){
       '<div class="oc-pay">'+o.payMethod+(o.discount>0?' \u00b7 Disc \u20b9'+o.discount.toFixed(0):'')+'</div>'+
       '<div class="oc-acts">'+
         '<button class="btn-o" style="font-size:9px;padding:3px 7px" onclick="reprintByInv('+o.invNo+')">\ud83d\udda8 Print</button>'+
+        '<button class="btn-o" style="font-size:9px;padding:3px 7px;border-color:var(--blue);color:var(--blue)" onclick="reprintParcel('+o.invNo+')">Parcel</button>'+
         '<button class="btn-d" onclick="delOrderByInv('+o.invNo+')">\u2715</button>'+
       '</div>'+
     '</div>';
@@ -1308,10 +1321,97 @@ function reprint(i){
 function reprintByInv(invNo){
   var o=orders.find(function(x){return x.invNo===invNo;});
   if(!o)return;
-  document.getElementById('slipsWrap').innerHTML=custSlip(o);
-  document.getElementById('printModal').classList.add('show');
-  setTimeout(function(){window.print();},350);
+  // Direct print — no modal needed
+  var printWin=window.open('','_blank','width=400,height=600');
+  if(!printWin){
+    // fallback to modal if popup blocked
+    document.getElementById('slipsWrap').innerHTML=custSlip(o);
+    document.getElementById('printModal').classList.add('show');
+    setTimeout(function(){window.print();},350);
+    return;
+  }
+  printWin.document.write('<html><head><title>DAWAT Receipt #'+invNo+'</title>');
+  printWin.document.write('<style>');
+  printWin.document.write('body{font-family:monospace;font-size:11px;margin:0;padding:8px;}');
+  printWin.document.write('h2{font-size:13px;text-align:center;margin:4px 0;}');
+  printWin.document.write('p{text-align:center;margin:2px 0;font-size:10px;}');
+  printWin.document.write('hr{border:none;border-top:1px dashed #000;margin:6px 0;}');
+  printWin.document.write('table{width:100%;border-collapse:collapse;font-size:10px;}');
+  printWin.document.write('th{text-align:left;border-bottom:1px solid #000;padding:2px;}');
+  printWin.document.write('td{padding:2px;}');
+  printWin.document.write('.grand-r{font-weight:bold;border-top:1px solid #000;}');
+  printWin.document.write('.center{text-align:center;}');
+  printWin.document.write('@media print{body{margin:0;}}');
+  printWin.document.write('</style></head><body>');
+  // Build receipt text
+  var items=(o.cart&&o.cart.length?o.cart:
+    (o.itemsText||o.Items||'').split(',').map(function(p){
+      p=p.trim();var m=p.match(/^(.+?)\s+x(\d+)$/i);
+      return m?{name:m[1],qty:parseInt(m[2]),price:0}:{name:p,qty:1,price:0};
+    }).filter(function(i){return i.name;}));
+  var rows=items.map(function(i){
+    return '<tr><td>'+(i.name||'Item')+'</td><td style="text-align:center">'+(i.qty||1)+'</td><td style="text-align:right">'+(i.price?'\u20b9'+i.price:'')+'</td><td style="text-align:right">'+(i.price?'\u20b9'+(i.price*(i.qty||1)).toFixed(0):'')+'</td></tr>';
+  }).join('');
+  printWin.document.write('<h2>'+shop.name+'</h2>');
+  if(shop.tagline) printWin.document.write('<p>'+shop.tagline+'</p>');
+  if(shop.address) printWin.document.write('<p>'+shop.address+'</p>');
+  if(shop.phone) printWin.document.write('<p>Ph: '+shop.phone+'</p>');
+  printWin.document.write('<hr>');
+  printWin.document.write('<p>INV #'+o.invNo+' | '+o.date+' '+o.time+'</p>');
+  printWin.document.write('<p>Pay: '+o.payMethod+(o.custName?' | '+o.custName:'')+'</p>');
+  if(o.notes) printWin.document.write('<p>Note: '+o.notes+'</p>');
+  printWin.document.write('<hr>');
+  if(rows){
+    printWin.document.write('<table><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amt</th></tr>');
+    printWin.document.write(rows);
+    printWin.document.write('</table><hr>');
+  }
+  printWin.document.write('<table>');
+  if(o.subtotal) printWin.document.write('<tr><td>Subtotal</td><td style="text-align:right">\u20b9'+o.subtotal.toFixed(2)+'</td></tr>');
+  if(o.discount>0) printWin.document.write('<tr><td>Discount</td><td style="text-align:right;color:green">-\u20b9'+o.discount.toFixed(2)+'</td></tr>');
+  if(o.gst>0) printWin.document.write('<tr><td>GST</td><td style="text-align:right">\u20b9'+o.gst.toFixed(2)+'</td></tr>');
+  printWin.document.write('<tr class="grand-r"><td><b>TOTAL</b></td><td style="text-align:right"><b>\u20b9'+o.total.toFixed(2)+'</b></td></tr>');
+  printWin.document.write('</table><hr>');
+  printWin.document.write('<p class="center">PARCEL / TAKEAWAY</p>');
+  printWin.document.write('<p class="center">'+(shop.footer||'Thank you! Visit again.')+'</p>');
+  printWin.document.write('</body></html>');
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function(){printWin.print();printWin.close();},400);
 }
+function reprintParcel(invNo){
+  var o=orders.find(function(x){return x.invNo===invNo;});
+  if(!o)return;
+  var printWin=window.open('','_blank','width=350,height=400');
+  if(!printWin){toast('Allow popups to print','err');return;}
+  var items=(o.cart&&o.cart.length)?o.cart:
+    (o.itemsText||'').split(',').map(function(p){
+      p=p.trim();var m=p.match(/^(.+?)\s+x(\d+)$/i);
+      return m?{name:m[1],qty:parseInt(m[2])}:{name:p,qty:1};
+    }).filter(function(i){return i.name;});
+  var lines=items.map(function(i){return '  '+String(i.qty||1).padStart(2)+'x  '+(i.name||'Item');}).join('\n');
+  printWin.document.write('<html><head><title>Parcel #'+invNo+'</title>');
+  printWin.document.write('<style>body{font-family:monospace;font-size:12px;margin:8px;}pre{white-space:pre-wrap;}@media print{body{margin:0;}}</style>');
+  printWin.document.write('</head><body><pre>');
+  printWin.document.write('======  KITCHEN / PARCEL  ======\n');
+  printWin.document.write('Token: #'+invNo+'\n');
+  printWin.document.write('Date:  '+o.date+'  Time: '+o.time+'\n');
+  printWin.document.write('Type:  TAKEAWAY\n');
+  if(o.custName) printWin.document.write('Name:  '+o.custName+'\n');
+  printWin.document.write('--------------------------------\n');
+  printWin.document.write('  Qty   Item\n');
+  printWin.document.write('--------------------------------\n');
+  printWin.document.write(lines+'\n');
+  printWin.document.write('--------------------------------\n');
+  if(o.notes) printWin.document.write('NOTE: '+o.notes+'\n');
+  printWin.document.write('Total: Rs.'+o.total.toFixed(0)+'  Pay: '+o.payMethod+'\n');
+  printWin.document.write('================================\n');
+  printWin.document.write('</pre></body></html>');
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function(){printWin.print();printWin.close();},400);
+}
+
 function delOrderByInv(invNo){
   if(!confirm('Delete this order?'))return;
   var idx=orders.findIndex(function(x){return x.invNo===invNo;});
@@ -1586,17 +1686,8 @@ function quickExpense(category){
     category:category+(note?' - '+note:''),
     amount:-Math.abs(amt),note:note,inv:'Manual',savedAt:now.getTime()
   });
-  saveAll();syncRegisterToSheets();renderCash();
-  toast('Expense: ₹'+amt+' ('+category+')');
-  // Offer raw material stock update
-  var linked=rawMaterials.filter(function(m){return m.category===category;});
-  if(linked.length>0){
-    setTimeout(function(){
-      if(confirm('Update Raw Material Stock for "'+category+'"?')){
-        quickAddRawStock(category,amt);
-      }
-    },500);
-  }
+    saveAll();syncRegisterToSheets();renderCash();
+  toast('Expense: ₹'+amt+' ('+category+')','ok');
 }
 function syncRegisterToSheets(){
   var now=new Date();
@@ -2784,26 +2875,27 @@ function mapOrder(o){
   var ts=(typeof savedAt==='number'&&savedAt>1000000000000)?savedAt:
          (typeof savedAt==='string'&&parseFloat(savedAt)>1000000000000)?parseFloat(savedAt):
          parseSavedAt(savedAt, o.Date||o.date, o.Time||o.time);
+  var itemsText=String(o.Items||o.items||'').trim();
   var cart=(function(){
+    // Try 1: already an array
     var c=o.Cart||o.cart;
-    if(Array.isArray(c))return c;
-    if(typeof c==='string'&&c.indexOf('[')>=0){try{return JSON.parse(c);}catch(e){}}
+    if(Array.isArray(c)&&c.length) return c;
+    // Try 2: JSON string
+    if(typeof c==='string'&&c.length>2){
+      try{var p=JSON.parse(c);if(Array.isArray(p)&&p.length)return p;}catch(e){}
+    }
+    // Try 3: parse from Items text summary "Name x2, Name2 x1"
+    if(itemsText){
+      var built=itemsText.split(',').map(function(part){
+        part=part.trim();
+        var m=part.match(/^(.+?)\s+x(\d+)$/i)||part.match(/^(\d+)x?\s+(.+?)(?:\s+@.*)?$/i);
+        if(m) return{name:(m[1]||m[2]).trim(),qty:parseInt(m[2]||m[1])||1,price:0,id:'',note:''};
+        return part?{name:part,qty:1,price:0,id:'',note:''}:null;
+      }).filter(Boolean);
+      if(built.length) return built;
+    }
     return [];
   })();
-  // Items text column — readable fallback when cart JSON is unavailable
-  var itemsText=String(o.Items||o.items||'');
-  // If cart is empty but Items text exists, build minimal cart objects from it
-  if(cart.length===0&&itemsText){
-    cart=itemsText.split(',').map(function(part){
-      part=part.trim();
-      // Format: "Chicken Biryani x2" or "1x Chicken Biryani @Rs.150"
-      var m=part.match(/^(.+?)\s+x(\d+)$/i)||part.match(/^(\d+)x\s+(.+?)(?:\s+@.*)?$/i);
-      if(m){
-        return{name:m[1].trim()||m[2].trim(),qty:parseInt(m[2]||m[1])||1,price:0,id:'',note:''};
-      }
-      return{name:part,qty:1,price:0,id:'',note:''};
-    }).filter(function(i){return i.name;});
-  }
   return{
     invNo:parseInt(o.InvNo||o.invNo)||0,
     date:String(o.Date||o.date||''),
