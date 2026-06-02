@@ -2331,9 +2331,10 @@ var kotPrinter={
       const bytes=this.textToBytes(text);
       // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        // Detect MTU-safe chunk size — iOS needs <=100, Android can handle 200
-        // Start small (100) and increase only if needed
-        const chunkSize=this._bleChunkSize||100;
+        // iOS BLE MTU = 20 bytes, Android = 100-200 bytes
+        const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&'ontouchend' in document);
+        const defaultChunk=isIOS?20:100;
+        const chunkSize=this._bleChunkSize||defaultChunk;
         const hasNoResp=this.characteristic.properties.writeWithoutResponse;
         const hasWrite=this.characteristic.properties.write;
 
@@ -2368,8 +2369,11 @@ var kotPrinter={
                 // Exponential backoff: 200ms, 400ms, 800ms
                 await new Promise(r=>setTimeout(r,200*Math.pow(2,attempt)));
                 // Auto-reconnect on disconnection errors
-                if(gattErr.message&&(gattErr.message.includes('disconnected')||gattErr.message.includes('GATT'))){
-                  try{await this._reconnect();}catch(re){}
+                if(gattErr.message&&(gattErr.message.includes('disconnected')||gattErr.message.includes('GATT')||gattErr.message.includes('NetworkError'))){
+                  try{
+                    await this._reconnect();
+                    await new Promise(r=>setTimeout(r,800)); // stabilise after reconnect
+                  }catch(re){}
                 }
               }
             }
