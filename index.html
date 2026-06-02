@@ -958,7 +958,7 @@ function syncAllData(){
   var steps=[
     {name:'Settings',  fn:function(){return gsPost('saveSettings', shop);}},
     {name:'Categories',fn:function(){return gsPost('syncCategories', cats);}},
-    {name:'Menu',      fn:function(){return gsPost('syncMenu', menuItems);}},
+    {name:'Menu',      fn:function(){dedupeMenu();return gsPost('syncMenu', menuItems);}},
     {name:'Staff',     fn:function(){return gsPost('syncStaff', staffList);}},
     {name:'Loyalty',   fn:function(){return gsPost('syncLoyalty', loyaltyDb);}},
     {name:'InvNo',     fn:function(){return gsPost('saveInvNo', invNo);}},
@@ -1290,7 +1290,7 @@ function renderOrders(){
   }
   document.getElementById('ordersGrid').innerHTML=list.slice(0,100).map(function(o,i){
     var st=o.status||'pending';
-    var stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--muted)'};
+    var stColor={'pending':'var(--orange)','cooking':'var(--blue)','ready':'var(--green)','delivered':'var(--green)'};
     var itemsHtml=getItemsStr(o);
     return '<div class="oc">'+
       '<div class="oc-hd">'+
@@ -2216,11 +2216,14 @@ var kotPrinter={
         return false;
       }
       this.device=device;this.characteristic=characteristic;this.type='bluetooth';
+      this._savedDevice=device; // keep reference for auto-reconnect
+      this._serviceUUIDs=serviceUUIDs;
       S.s('kotType','bluetooth');
       toast('\u2705 BT Connected: '+device.name,'ok');kotPrinter.processLogo();
       device.addEventListener('gattserverdisconnected',()=>{
+        // Don't null _savedDevice — we need it to reconnect
         this.device=null;this.characteristic=null;this.type=null;
-        toast('\ud83d\udd35 Printer disconnected','err');
+        toast('\ud83d\udd35 Printer disconnected. Will auto-reconnect on next print.');
         this.updateStatus();
       });
       this.updateStatus();
@@ -2288,10 +2291,41 @@ var kotPrinter={
     return false;
   },
   // ── Send ESC/POS data ──
-  print:async function(text){
-    if(!this.device&&!this.characteristic){
-      toast('\u26a0\ufe0f No printer connected. Go Admin \u2192 KOT Printer to connect.','err');
+  // Auto-reconnect to saved BT device without showing picker
+  _reconnect:async function(){
+    if(!this._savedDevice) return false;
+    try{
+      toast('\ud83d\udd35 Reconnecting to '+this._savedDevice.name+'...');
+      const server=await this._savedDevice.gatt.connect();
+      const uuids=['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb'];
+      let ch=null;
+      for(const u of uuids){
+        try{const svc=await server.getPrimaryService(u);const chars=await svc.getCharacteristics();ch=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);if(ch)break;}catch(e){}
+      }
+      if(!ch){
+        try{const svcs=await server.getPrimaryServices();for(const svc of svcs){try{const chars=await svc.getCharacteristics();ch=chars.find(c=>c.properties.write||c.properties.writeWithoutResponse);if(ch)break;}catch(e){}}}catch(e){}
+      }
+      if(!ch){toast('\u274c Reconnect failed — characteristic not found','err');return false;}
+      this.device=this._savedDevice;this.characteristic=ch;this.type='bluetooth';
+      this.updateStatus();
+      toast('\u2705 Printer reconnected: '+this._savedDevice.name,'ok');
+      return true;
+    }catch(e){
+      toast('\u274c Auto-reconnect failed: '+e.message+'. Tap Connect BT again.','err');
       return false;
+    }
+  },
+
+  print:async function(text){
+    // Auto-reconnect if BT device is saved but currently disconnected
+    if(!this.device&&!this.characteristic){
+      if(this._savedDevice&&this._savedDevice.gatt){
+        const ok=await this._reconnect();
+        if(!ok){toast('\u26a0\ufe0f No printer connected. Go Admin \u2192 Printer.','err');return false;}
+      }else{
+        toast('\u26a0\ufe0f No printer connected. Go Admin \u2192 KOT Printer to connect.','err');
+        return false;
+      }
     }
     try{
       const bytes=this.textToBytes(text);
@@ -2719,8 +2753,8 @@ async function sendKOT(d){
   toast('\uD83D\uDDA8 Printing Customer Receipt...');
   await kotPrinter.print(custText);
 
-  // Wait for paper to feed then print Parcel copy
-  await new Promise(function(res){setTimeout(res,2200);});
+  // Wait for paper to feed then print Parcel copy (800ms — enough for 58mm printer)
+  await new Promise(function(res){setTimeout(res,800);});
   const parcelText=chefSlip_text(d);
   toast('\uD83D\uDDA8 Printing Parcel Copy...');
   await kotPrinter.print(parcelText);
@@ -2737,6 +2771,18 @@ function toast(msg,type=''){const w=document.getElementById('toastW');const t=do
 
 // INIT
 // ── STARTUP: Load all data from Google Sheets ──
+// Deduplicate menu items by id — prevents Sheet duplicates from persisting
+function dedupeMenu(){
+  var seen={};
+  menuItems=menuItems.filter(function(m){
+    var key=String(m.id||m.Id||'');
+    if(!key||seen[key]) return false;
+    seen[key]=true;
+    return true;
+  });
+}
+
+
 function loadFromSheets(onDone){
   setSyncStatus('syncing');
   gsGet('getAll')
@@ -2753,6 +2799,7 @@ function loadFromSheets(onDone){
     // ── Menu items ──
     if(d.menu&&d.menu.length>0){
       menuItems=d.menu;
+      dedupeMenu(); // remove any duplicates from Sheets
       S.s('menu',menuItems);
     }
     // ── Categories ──
@@ -2806,15 +2853,33 @@ function loadFromSheets(onDone){
     window._mapOrderDebug=true; // debug first order cart
     // ── Orders (from getAll) ──
     if(d.orders&&d.orders.length>0){
-      var sheetsInvNos=new Set(d.orders.map(function(o){return parseInt(o.InvNo||o.invNo)||0;}));
-      var localOnly=orders.filter(function(o){return !sheetsInvNos.has(o.invNo);});
-      var fromSheets=d.orders.map(mapOrder);
+      // Build a local map for smart merge
+      var localMap={};
+      orders.forEach(function(o){localMap[o.invNo]=o;});
+
+      var fromSheets=d.orders.map(mapOrder).map(function(sheetOrd){
+        var local=localMap[sheetOrd.invNo];
+        if(!local) return sheetOrd;
+        // Smart merge: take Sheet version but keep local cart if it has more data
+        var localCartOk=local.cart&&local.cart.length>0;
+        var sheetCartOk=sheetOrd.cart&&sheetOrd.cart.length>0;
+        if(localCartOk&&!sheetCartOk){
+          sheetOrd.cart=local.cart;
+          sheetOrd.itemsText=local.itemsText||sheetOrd.itemsText;
+        }
+        // Also keep local status if it's more advanced than 'pending'
+        if(sheetOrd.status==='pending'&&local.status&&local.status!=='pending'){
+          sheetOrd.status=local.status;
+        }
+        return sheetOrd;
+      });
+
+      var sheetsInvSet=new Set(fromSheets.map(function(o){return o.invNo;}));
+      var localOnly=orders.filter(function(o){return !sheetsInvSet.has(o.invNo);});
       orders=localOnly.concat(fromSheets);
       orders.sort(function(a,b){return b.invNo-a.invNo;});
       S.s('orders',orders);
       console.log('DAWAT: orders loaded='+fromSheets.length+' localOnly='+localOnly.length);
-      // Debug: log first order savedAt
-      if(fromSheets.length>0){console.log('First order savedAt='+fromSheets[0].savedAt+' date='+sdStr(fromSheets[0].savedAt)+' invNo='+fromSheets[0].invNo);}
     }
 
     setSyncStatus('ok');
