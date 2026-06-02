@@ -2331,26 +2331,59 @@ var kotPrinter={
       const bytes=this.textToBytes(text);
       // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        const chunkSize=200; // Safe BLE chunk size for KPC307
-        const useNoResp=this.characteristic.properties.writeWithoutResponse;
+        // Detect MTU-safe chunk size — iOS needs <=100, Android can handle 200
+        // Start small (100) and increase only if needed
+        const chunkSize=this._bleChunkSize||100;
+        const hasNoResp=this.characteristic.properties.writeWithoutResponse;
+        const hasWrite=this.characteristic.properties.write;
+
+        // Small stabilisation delay before first chunk (helps iOS)
+        await new Promise(r=>setTimeout(r,300));
+
         for(let i=0;i<bytes.length;i+=chunkSize){
           const chunk=bytes.slice(i,i+chunkSize);
-          // Retry each chunk up to 3 times on GATT error
           let sent=false;
-          for(let attempt=0;attempt<3;attempt++){
-            try{
-              if(useNoResp)await this.characteristic.writeValueWithoutResponse(chunk);
-              else await this.characteristic.writeValue(chunk);
-              sent=true;
-              break;
-            }catch(gattErr){
-              console.warn('BLE chunk attempt '+(attempt+1)+' failed:',gattErr.message);
-              if(attempt<2)await new Promise(r=>setTimeout(r,300*(attempt+1)));
+
+          // Try writeValueWithoutResponse first (faster, no ack needed)
+          // then fall back to writeValue (slower but more compatible)
+          const writeMethods=[];
+          if(hasNoResp) writeMethods.push('noResp');
+          if(hasWrite||!hasNoResp) writeMethods.push('write');
+
+          outer:
+          for(const method of writeMethods){
+            for(let attempt=0;attempt<4;attempt++){
+              try{
+                if(method==='noResp'){
+                  await this.characteristic.writeValueWithoutResponse(chunk);
+                }else{
+                  await this.characteristic.writeValue(chunk);
+                }
+                sent=true;
+                // If this chunk succeeded, remember which method works
+                this._bleMethod=method;
+                break outer;
+              }catch(gattErr){
+                console.warn('BLE '+method+' attempt '+(attempt+1)+' failed:',gattErr.message);
+                // Exponential backoff: 200ms, 400ms, 800ms
+                await new Promise(r=>setTimeout(r,200*Math.pow(2,attempt)));
+                // Auto-reconnect on disconnection errors
+                if(gattErr.message&&(gattErr.message.includes('disconnected')||gattErr.message.includes('GATT'))){
+                  try{await this._reconnect();}catch(re){}
+                }
+              }
             }
           }
-          if(!sent)throw new Error('BLE chunk failed after 3 attempts');
-          // 100ms between chunks, 600ms after last chunk (lets cut command process)
-          await new Promise(r=>setTimeout(r,i+chunkSize>=bytes.length?600:100));
+
+          if(!sent){
+            // Auto-reduce chunk size for next print attempt
+            this._bleChunkSize=Math.max(20,Math.floor(chunkSize/2));
+            throw new Error('BLE write failed. Chunk size reduced to '+this._bleChunkSize+'B — try printing again.');
+          }
+
+          // Delay between chunks: last chunk needs longer for paper feed
+          const isLast=(i+chunkSize>=bytes.length);
+          await new Promise(r=>setTimeout(r,isLast?1200:150));
         }
       }
       // WebUSB (WinUSB driver via Zadig)
@@ -2525,7 +2558,7 @@ var kotPrinter={
     this.updateStatus();
   },
 
-  isConnected:function(){return !!(this.device||this.characteristic);},
+  isConnected:function(){return !!(this.device&&this.characteristic)||!!(this._savedDevice&&this._savedDevice.gatt&&this._savedDevice.gatt.connected);},
 
   updateStatus:function(){
     const el=document.getElementById('kotStatus');
