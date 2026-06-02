@@ -1200,23 +1200,23 @@ function newOrder(){if(cart.length&&!confirm('Clear order?'))return;lastPrintSna
 
 // Robust items display helper — tries ALL sources
 function getItemsStr(o){
-  // 1. Try parsed cart array (best)
-  if(o.cart&&Array.isArray(o.cart)&&o.cart.length){
+  // 1. Try parsed cart array (best — from localStorage or mapOrder)
+  if(Array.isArray(o.cart)&&o.cart.length){
     return o.cart.map(function(ci){
       return (ci.name||'Item')+' ×'+(ci.qty||1);
     }).join(', ');
   }
-  // 2. Try itemsText (from mapOrder Sheets Items column)
+  // 2. Try itemsText (dedicated field from Apps Script v7+)
   var it=String(o.itemsText||'').trim();
-  if(it&&it!=='undefined'&&it!=='null'&&it!=='') return it;
-  // 3. Try raw Items / items field directly
+  if(it&&it!=='undefined'&&it!=='null'&&it.length>1) return it;
+  // 3. Try Items/items field (raw Sheets column value)
   var raw=String(o.Items||o.items||'').trim();
-  if(raw&&raw!=='undefined'&&raw!=='null'&&raw!=='') return raw;
-  // 4. Try parsing Cart string directly
-  var cartRaw=o.Cart||o.cart;
-  if(typeof cartRaw==='string'&&cartRaw.indexOf('[')>=0){
+  if(raw&&raw!=='undefined'&&raw!=='null'&&raw.length>1) return raw;
+  // 4. Try parsing Cart string as last resort
+  var cs=String(o.Cart||'');
+  if(cs.length>2&&cs.indexOf('[')>=0){
     try{
-      var parsed=JSON.parse(cartRaw);
+      var parsed=JSON.parse(cs);
       if(Array.isArray(parsed)&&parsed.length){
         return parsed.map(function(ci){return (ci.name||'Item')+' ×'+(ci.qty||1);}).join(', ');
       }
@@ -2940,16 +2940,20 @@ function mapOrder(o){
   var ts=(typeof savedAt==='number'&&savedAt>1000000000000)?savedAt:
          (typeof savedAt==='string'&&parseFloat(savedAt)>1000000000000)?parseFloat(savedAt):
          parseSavedAt(savedAt, o.Date||o.date, o.Time||o.time);
-  var itemsText=String(o.Items||o.items||'').trim();
+  // itemsText: dedicated field from Apps Script v7+ OR Items column header
+  var itemsText=String(o.itemsText||o.Items||o.items||'').trim();
   var cart=(function(){
-    // Try 1: already an array
-    var c=o.Cart||o.cart;
-    if(Array.isArray(c)&&c.length) return c;
-    // Try 2: JSON string
-    if(typeof c==='string'&&c.length>2){
-      try{var p=JSON.parse(c);if(Array.isArray(p)&&p.length)return p;}catch(e){}
+    // Try 1: o.cart (lowercase) — pre-parsed array already set by Apps Script readOrders()
+    if(Array.isArray(o.cart)&&o.cart.length) return o.cart;
+    // Try 2: o.Cart (uppercase string from Sheets cell) — parse it
+    var rawStr=String(o.Cart||'');
+    if(rawStr.length>2&&rawStr.indexOf('[')>=0){
+      try{var p=JSON.parse(rawStr);if(Array.isArray(p)&&p.length)return p;}catch(e){
+        // Try fixing common Sheets encoding issues
+        try{var p2=JSON.parse(rawStr.replace(/'/g,'"'));if(Array.isArray(p2)&&p2.length)return p2;}catch(e2){}
+      }
     }
-    // Try 3: parse from Items text summary "Name x2, Name2 x1"
+    // Try 3: build from Items text "Boneless Biryani x1, Naan x2"
     if(itemsText){
       var built=itemsText.split(',').map(function(part){
         part=part.trim();
