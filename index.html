@@ -2331,25 +2331,40 @@ var kotPrinter={
       const bytes=this.textToBytes(text);
       // Bluetooth BLE
       if(this.type==='bluetooth'&&this.characteristic){
-        // iOS BLE MTU = 20 bytes, Android = 100-200 bytes
-        const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&'ontouchend' in document);
-        const defaultChunk=isIOS?20:100;
+        // Device detection for safe chunk size
+        // PC/Windows Chrome negotiates higher MTU automatically → 100B OK
+        // iOS + Android Chrome = 20 bytes default MTU (no negotiation in Web BT API)
+        const ua=navigator.userAgent;
+        const isMobileBLE=/Android|iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document);
+        const defaultChunk=isMobileBLE?20:100;
         const chunkSize=this._bleChunkSize||defaultChunk;
+
         const hasNoResp=this.characteristic.properties.writeWithoutResponse;
         const hasWrite=this.characteristic.properties.write;
 
-        // Small stabilisation delay before first chunk (helps iOS)
-        await new Promise(r=>setTimeout(r,300));
+        // Android prefers writeValue (acknowledged), iOS/others prefer writeValueWithoutResponse
+        const isAndroid=/Android/.test(ua);
+        const writeMethods=[];
+        if(isAndroid){
+          // Android: try writeValue first (avoids buffer overflow), fallback noResp
+          if(hasWrite) writeMethods.push('write');
+          if(hasNoResp) writeMethods.push('noResp');
+        } else {
+          // iOS/PC: writeValueWithoutResponse is faster and more compatible
+          if(hasNoResp) writeMethods.push('noResp');
+          if(hasWrite) writeMethods.push('write');
+        }
+        // Always have at least one method
+        if(!writeMethods.length) writeMethods.push('noResp','write');
+
+        console.log('BLE print: device='+ua.substring(0,30)+' chunk='+chunkSize+'B methods='+writeMethods.join(','));
+
+        // Stabilisation delay before first write (critical for Android)
+        await new Promise(r=>setTimeout(r,isAndroid?500:300));
 
         for(let i=0;i<bytes.length;i+=chunkSize){
           const chunk=bytes.slice(i,i+chunkSize);
           let sent=false;
-
-          // Try writeValueWithoutResponse first (faster, no ack needed)
-          // then fall back to writeValue (slower but more compatible)
-          const writeMethods=[];
-          if(hasNoResp) writeMethods.push('noResp');
-          if(hasWrite||!hasNoResp) writeMethods.push('write');
 
           outer:
           for(const method of writeMethods){
@@ -2357,37 +2372,33 @@ var kotPrinter={
               try{
                 if(method==='noResp'){
                   await this.characteristic.writeValueWithoutResponse(chunk);
-                }else{
+                } else {
                   await this.characteristic.writeValue(chunk);
                 }
                 sent=true;
-                // If this chunk succeeded, remember which method works
                 this._bleMethod=method;
                 break outer;
               }catch(gattErr){
-                console.warn('BLE '+method+' attempt '+(attempt+1)+' failed:',gattErr.message);
-                // Exponential backoff: 200ms, 400ms, 800ms
-                await new Promise(r=>setTimeout(r,200*Math.pow(2,attempt)));
-                // Auto-reconnect on disconnection errors
-                if(gattErr.message&&(gattErr.message.includes('disconnected')||gattErr.message.includes('GATT')||gattErr.message.includes('NetworkError'))){
-                  try{
-                    await this._reconnect();
-                    await new Promise(r=>setTimeout(r,800)); // stabilise after reconnect
-                  }catch(re){}
+                console.warn('BLE '+method+' attempt '+(attempt+1)+' err:',gattErr.message);
+                const delay=isAndroid?400*Math.pow(2,attempt):200*Math.pow(2,attempt);
+                await new Promise(r=>setTimeout(r,delay));
+                // Auto-reconnect on GATT disconnect
+                if(gattErr.message&&(gattErr.message.includes('disconnect')||gattErr.message.includes('GATT')||gattErr.message.includes('Network'))){
+                  try{await this._reconnect();await new Promise(r=>setTimeout(r,1000));}catch(re){}
                 }
               }
             }
           }
 
           if(!sent){
-            // Auto-reduce chunk size for next print attempt
             this._bleChunkSize=Math.max(20,Math.floor(chunkSize/2));
-            throw new Error('BLE write failed. Chunk size reduced to '+this._bleChunkSize+'B — try printing again.');
+            throw new Error('BLE write failed. Chunk='+this._bleChunkSize+'B — tap Print once more.');
           }
 
-          // Delay between chunks: last chunk needs longer for paper feed
+          // Inter-chunk delay: Android needs more breathing room
           const isLast=(i+chunkSize>=bytes.length);
-          await new Promise(r=>setTimeout(r,isLast?1200:150));
+          const interDelay=isAndroid?(isLast?2000:200):(isLast?1200:150);
+          await new Promise(r=>setTimeout(r,interDelay));
         }
       }
       // WebUSB (WinUSB driver via Zadig)
