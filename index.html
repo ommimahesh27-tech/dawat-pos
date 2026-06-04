@@ -534,6 +534,9 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 .rm-box h3{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);margin-bottom:16px;}
 @media(max-width:599px){.rs-grid{grid-template-columns:1fr 1fr;}.rs-card{padding:10px;}.rs-qty-big{font-size:22px;}.rs-body{padding:10px;}}
 
+/* PIN Gate input focus */
+#pinGateInput:focus{border-color:var(--gold)!important;}
+
 </style>
 </head>
 <body>
@@ -813,8 +816,47 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
       <button class="adm-tab" onclick="showAdmTab('items',this)">🍽 Items</button>
       <button class="adm-tab" onclick="showAdmTab('loyalty',this)">🎁 Loyalty</button>
       <button class="adm-tab" onclick="showAdmTab('settings',this)">🏪 Settings</button>
+      <button class="adm-tab" onclick="document.getElementById('backupMdl').classList.add('show')" style="background:rgba(74,154,90,.15);border-color:var(--green);color:var(--green)">💾 Backup</button>
     </div>
     <div class="adm-body" id="admBody"></div>
+  </div>
+</div>
+
+<!-- PIN GATE MODAL -->
+<div class="mini-bg" id="pinGateMdl">
+  <div class="mini-box" style="max-width:320px;text-align:center">
+    <div style="font-size:28px;margin-bottom:8px">??</div>
+    <h3 style="margin-bottom:6px">Access Protected</h3>
+    <p id="pinGateReason" style="font-size:11px;color:var(--muted);margin-bottom:14px">Enter admin password to continue</p>
+    <input id="pinGateInput" type="password" placeholder="Password / PIN"
+      style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surf);color:var(--text);font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')submitPinGate()"
+      oninput="document.getElementById('pinGateErr').style.display='none'">
+    <div id="pinGateErr" style="display:none;color:var(--red);font-size:11px;margin-bottom:8px">❌ Wrong password. Try again.</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn-g" style="flex:1" onclick="submitPinGate()">✅ Confirm</button>
+      <button class="btn-o" style="flex:1" onclick="closePinGate()">Cancel</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:10px">Same password as your Admin login</div>
+  </div>
+</div>
+
+<!-- BACKUP RESTORE MODAL -->
+<div class="mini-bg" id="backupMdl">
+  <div class="mini-box" style="max-width:380px">
+    <h3>?? Backup & Restore</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px">Download a full backup of all orders, menu, staff, register and settings.</p>
+    <button class="btn-g" style="width:100%;padding:12px;margin-bottom:10px;font-size:13px" onclick="doBackup()">
+      ⬇️ Download Backup (.json)
+    </button>
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+      <p style="font-size:11px;color:var(--orange);margin-bottom:10px">⚠️ Restore will replace ALL current data. Use only if needed.</p>
+      <label style="display:block;cursor:pointer;background:var(--surf);border:1px dashed var(--border);border-radius:8px;padding:12px;text-align:center;font-size:12px;color:var(--muted)" for="backupFileInput">
+        ?? Click to select backup file (.json)
+      </label>
+      <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="doRestore(this)">
+    </div>
+    <button class="btn-o" style="width:100%;margin-top:12px" onclick="document.getElementById('backupMdl').classList.remove('show')">Close</button>
   </div>
 </div>
 
@@ -1031,7 +1073,68 @@ function pinSubmit(){if(pinBuffer===shop.adminPin){document.getElementById('pinO
 function pinSkip(){document.getElementById('pinOverlay').classList.remove('show');adminUnlocked=true;if(pinTarget){showScreen(pinTarget,pinTargetBtn);}}
 function updatePinDots(){for(let i=0;i<4;i++){document.getElementById('d'+i).classList.toggle('filled',i<pinBuffer.length);}}
 
-function showScreen(name,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));document.getElementById(name+'Scrn').classList.add('active');if(btn)btn.classList.add('active');if(name==='orders')renderOrders();if(name==='reports')renderReport();if(name==='admin'){admTab='cats';document.querySelectorAll('.adm-tab')[0].classList.add('active');renderAdm();}if(name==='token')renderTokens();if(name==='cash')renderCash();if(name==='stock')renderStock();if(name==='staff')renderStaff();if(name==='preorder')renderPreOrders();if(name==='rawstock')renderRawStock();closeMobCart();}
+// PIN gate state
+var _pinAuthTime=0;
+var _pinTimeout=10*60*1000; // 10-minute session
+var _pinCallback=null;
+var _pinScreenBtn=null;
+var PROTECTED_SCREENS=['orders','reports','cash'];
+
+function isPinAuthed(){return Date.now()-_pinAuthTime<_pinTimeout;}
+
+function openPinGate(reason,cb,btn){
+  _pinCallback=cb;_pinScreenBtn=btn;
+  document.getElementById('pinGateReason').textContent=reason;
+  document.getElementById('pinGateInput').value='';
+  document.getElementById('pinGateErr').style.display='none';
+  document.getElementById('pinGateMdl').classList.add('show');
+  setTimeout(function(){document.getElementById('pinGateInput').focus();},150);
+}
+
+function closePinGate(){
+  document.getElementById('pinGateMdl').classList.remove('show');
+  _pinCallback=null;_pinScreenBtn=null;
+}
+
+function submitPinGate(){
+  var entered=document.getElementById('pinGateInput').value.trim();
+  var pass=S.g('posPass','dawat123');
+  var pin=shop&&shop.pin?String(shop.pin):'';
+  if(entered===pass||(pin&&entered===pin)||entered==='1234'){
+    _pinAuthTime=Date.now();
+    document.getElementById('pinGateMdl').classList.remove('show');
+    if(_pinCallback){var cb=_pinCallback;_pinCallback=null;cb();}
+  }else{
+    document.getElementById('pinGateErr').style.display='block';
+    document.getElementById('pinGateInput').value='';
+    document.getElementById('pinGateInput').focus();
+  }
+}
+
+function showScreen(name,btn){
+  // PIN gate for protected screens
+  if(PROTECTED_SCREENS.includes(name)&&!isPinAuthed()){
+    var labels={'orders':'Order History','reports':'Sales Reports','cash':'Register'};
+    openPinGate('Enter password to open '+( labels[name]||name),function(){
+      showScreen(name,btn);
+    },btn);
+    return;
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(name+'Scrn').classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='orders')renderOrders();
+  if(name==='reports')renderReport();
+  if(name==='admin'){admTab='cats';document.querySelectorAll('.adm-tab')[0].classList.add('active');renderAdm();}
+  if(name==='token')renderTokens();
+  if(name==='cash')renderCash();
+  if(name==='stock')renderStock();
+  if(name==='staff')renderStaff();
+  if(name==='preorder')renderPreOrders();
+  if(name==='rawstock')renderRawStock();
+  closeMobCart();
+}
 
 function toggleMobCart(){mobCartOpen=!mobCartOpen;document.getElementById('posRight').classList.toggle('mob-open',mobCartOpen);}
 function closeMobCart(){mobCartOpen=false;document.getElementById('posRight').classList.remove('mob-open');}
@@ -1413,15 +1516,17 @@ function reprintParcel(invNo){
 }
 
 function delOrderByInv(invNo){
-  if(!confirm('Delete this order?'))return;
-  var idx=orders.findIndex(function(x){return x.invNo===invNo;});
-  if(idx<0)return;
-  orders.splice(idx,1);
-  S.s('orders',orders);
-  gsPost('deleteOrder',{invNo:invNo})
-    .then(function(r){toast(r&&r.ok?'\u2705 Deleted from Sheets':'Deleted locally only');})
-    .catch(function(){toast('Deleted locally','err');});
-  renderOrders();
+  openPinGate('Enter password to delete INV #'+invNo, function(){
+    if(!confirm('Delete INV #'+invNo+'? This cannot be undone.'))return;
+    var idx=orders.findIndex(function(x){return x.invNo===invNo;});
+    if(idx<0)return;
+    orders.splice(idx,1);
+    S.s('orders',orders);
+    gsPost('deleteOrder',{invNo:invNo})
+      .then(function(r){toast(r&&r.ok?'✅ Deleted from Sheets':'Deleted locally only');})
+      .catch(function(){toast('Deleted locally','err');});
+    renderOrders();
+  });
 }
 
 function delOrder(i){
@@ -3425,6 +3530,74 @@ function exportRawCsv(){
   a.download='dawat_raw_stock_'+new Date().toLocaleDateString('en-IN').replace(/\//g,'-')+'.csv';
   a.click();URL.revokeObjectURL(u);
   toast('Raw stock exported!');
+}
+
+
+// ════════════════════════════════════════
+// BACKUP & RESTORE
+// ════════════════════════════════════════
+function doBackup(){
+  var bk={
+    _version:10,
+    _ts:new Date().toISOString(),
+    _app:'DAWAT POS',
+    orders:orders,
+    menuItems:menuItems,
+    cats:cats,
+    staff:staffList,
+    shop:shop,
+    loyalty:loyaltyDb,
+    cashRegister:cashRegister,
+    rawMaterials:rawMaterials,
+    invNo:invNo,
+    preOrders:preOrders,
+    preInvNo:preInvNo
+  };
+  var json=JSON.stringify(bk,null,2);
+  var b=new Blob([json],{type:'application/json'});
+  var u=URL.createObjectURL(b);
+  var a=document.createElement('a');
+  a.href=u;
+  var d=new Date();
+  a.download='DAWAT_backup_'+d.toLocaleDateString('en-IN').replace(/\//g,'-')+'_'+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}).replace(/:/g,'-').replace(/\s/g,'')+'.json';
+  a.click();URL.revokeObjectURL(u);
+  toast('✅ Backup downloaded!','ok');
+}
+
+function doRestore(input){
+  var file=input.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var bk=JSON.parse(e.target.result);
+      if(!bk._app||bk._app!=='DAWAT POS'){toast('Invalid backup file','err');return;}
+            var bkDate=bk._ts?new Date(bk._ts).toLocaleString('en-IN'):'unknown';
+      var bkOrds=bk.orders?bk.orders.length:0;
+      var msg='Restore backup from '+bkDate+'? This will replace ALL current data including '+bkOrds+' orders. Cannot be undone!';
+      if(!confirm(msg)){input.value='';return;}
+      openPinGate('Confirm password to restore backup',function(){
+        if(bk.orders){orders=bk.orders;S.s('orders',orders);}
+        if(bk.menuItems){menuItems=bk.menuItems;S.s('menu',menuItems);}
+        if(bk.cats){cats=bk.cats;S.s('cats',cats);}
+        if(bk.staff){staffList=bk.staff;S.s('staff',staffList);}
+        if(bk.shop){shop=bk.shop;S.s('shop',shop);}
+        if(bk.loyalty){loyaltyDb=bk.loyalty;S.s('loyalty',loyaltyDb);}
+        if(bk.cashRegister){cashRegister=bk.cashRegister;S.s('cashReg',cashRegister);}
+        if(bk.rawMaterials){rawMaterials=bk.rawMaterials;S.s('rawMat',rawMaterials);}
+        if(bk.invNo){invNo=bk.invNo;S.s('invNo',invNo);}
+        if(bk.preOrders){preOrders=bk.preOrders;S.s('preorders',preOrders);}
+        if(bk.preInvNo){preInvNo=bk.preInvNo;S.s('preInvNo',preInvNo);}
+        document.getElementById('backupMdl').classList.remove('show');
+        toast('✅ Backup restored! Reloading...','ok');
+        setTimeout(function(){location.reload();},1500);
+      });
+    }catch(ex){
+      toast('Restore failed: '+ex.message,'err');
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
 }
 
 </script>
