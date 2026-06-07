@@ -203,6 +203,8 @@ header{height:var(--hh);background:linear-gradient(135deg,#15100A,#271800,#15100
 .orders-body{flex:1;overflow-y:auto;padding:12px 16px;}
 .sum-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
 .sum-c{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px;}
+.sum-locked{cursor:pointer;transition:border-color .2s;}
+.sum-locked:hover{border-color:var(--gold);}
 .sum-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
 .sum-val{font-size:18px;font-weight:700;color:var(--gold);}
 .orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
@@ -1075,10 +1077,10 @@ function updatePinDots(){for(let i=0;i<4;i++){document.getElementById('d'+i).cla
 
 // PIN gate state
 var _pinAuthTime=0;
-var _pinTimeout=10*60*1000; // 10-minute session
+var _pinTimeout=1*60*1000; // 1-minute visibility window
 var _pinCallback=null;
 var _pinScreenBtn=null;
-var PROTECTED_SCREENS=['orders','reports','cash'];
+var PROTECTED_SCREENS=['reports','cash']; // orders: only KPIs are gated
 
 function isPinAuthed(){return Date.now()-_pinAuthTime<_pinTimeout;}
 
@@ -1343,6 +1345,12 @@ function advanceToken(invNo,status){
 function clearDelivered(){orders.forEach(function(o){if(o.status==='delivered')o.status='archived';});saveAll();renderTokens();}
 function reprintToken(invNo){var o=orders.find(function(x){return x.invNo===invNo;});if(!o)return;document.getElementById('slipsWrap').innerHTML=custSlip(o);document.getElementById('printModal').classList.add('show');setTimeout(function(){window.print();},350);}
 
+function revealOrderKpis(){
+  openPinGate('Enter password to view sales figures', function(){
+    renderOrders(); // re-render with real values
+  });
+}
+
 function setOrdFilter(f){
   ordDateFilter=f;
   // Highlight active button
@@ -1382,11 +1390,37 @@ function renderOrders(){
 
   var tO=orders.filter(function(o){return sd(o.savedAt).toDateString()===todayStr;});
   var filtRev=list.reduce(function(s,o){return s+o.total;},0);
-  document.getElementById('sumBar').innerHTML=
-    '<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">'+tO.length+'</div></div>'+
-    '<div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9'+tO.reduce(function(s,o){return s+o.total;},0).toFixed(0)+'</div></div>'+
-    '<div class="sum-c"><div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Orders</div><div class="sum-val">'+list.length+'</div></div>'+
-    '<div class="sum-c"><div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Revenue</div><div class="sum-val">\u20b9'+filtRev.toFixed(0)+'</div></div>';
+  var todRev=tO.reduce(function(s,o){return s+o.total;},0).toFixed(0);
+  var filtRevStr=filtRev.toFixed(0);
+  if(isPinAuthed()){
+    document.getElementById('sumBar').innerHTML=
+      '<div class="sum-c"><div class="sum-lbl">Today Orders</div><div class="sum-val">'+tO.length+'</div></div>'+
+      '<div class="sum-c"><div class="sum-lbl">Today Revenue</div><div class="sum-val">\u20b9'+todRev+'</div></div>'+
+      '<div class="sum-c"><div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Orders</div><div class="sum-val">'+list.length+'</div></div>'+
+      '<div class="sum-c"><div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Revenue</div><div class="sum-val">\u20b9'+filtRevStr+'</div></div>';
+  }else{
+    document.getElementById('sumBar').innerHTML=
+      '<div class="sum-c sum-locked" onclick="revealOrderKpis()" title="Tap to unlock">'+
+        '<div class="sum-lbl">Today Orders</div>'+
+        '<div class="sum-val" style="filter:blur(6px);user-select:none;color:var(--muted)">••••</div>'+
+      '</div>'+
+      '<div class="sum-c sum-locked" onclick="revealOrderKpis()" title="Tap to unlock">'+
+        '<div class="sum-lbl">Today Revenue</div>'+
+        '<div class="sum-val" style="filter:blur(6px);user-select:none;color:var(--muted)">••••</div>'+
+      '</div>'+
+      '<div class="sum-c sum-locked" onclick="revealOrderKpis()" title="Tap to unlock">'+
+        '<div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Orders</div>'+
+        '<div class="sum-val" style="filter:blur(6px);user-select:none;color:var(--muted)">••••</div>'+
+      '</div>'+
+      '<div class="sum-c sum-locked" onclick="revealOrderKpis()" title="Tap to unlock">'+
+        '<div class="sum-lbl">'+(ordDateFilter==='all'?'Total':'Filtered')+' Revenue</div>'+
+        '<div class="sum-val" style="filter:blur(6px);user-select:none;color:var(--muted)">••••</div>'+
+      '</div>'+
+      '<div class="sum-c" onclick="revealOrderKpis()" style="cursor:pointer;border-color:var(--gold);background:var(--gold-dim);justify-content:center;align-items:center;display:flex;flex-direction:column;gap:4px">'+
+        '<div style="font-size:20px">\uD83D\uDD12</div>'+
+        '<div style="font-size:10px;color:var(--gold);font-weight:700">Tap to Reveal</div>'+
+      '</div>';
+  }
   if(!list.length){
     document.getElementById('ordersGrid').innerHTML='<div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">No orders found</div>';
     return;
@@ -2169,6 +2203,27 @@ function renderSettings(){document.getElementById('admBody').innerHTML=`<div cla
   <button class="btn-o" style="width:100%;margin-bottom:6px" onclick="debugSheetsConnection()">🔍 Debug: Test Sheets Connection</button>
   <div id="debugOut" style="display:none;background:#111;border:1px solid var(--border);border-radius:7px;padding:10px;font-size:10px;color:#4A9A5A;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:6px"></div>
 </div></div></div>
+<div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\uD83D\uDCF1 WhatsApp Hourly Reports</div><div class="panel-bd">
+<div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.25);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:10px;line-height:1.8">
+  <strong style="color:#25d366">Setup (free, one-time):</strong><br>
+  1. Save <strong>+34 644 50 87 12</strong> as <em>CallMeBot</em> in your contacts<br>
+  2. Send <strong>I allow callmebot to send me messages</strong> to that number on WhatsApp<br>
+  3. You will receive an API key — paste it below
+</div>
+<div class="fg"><label>WhatsApp Number (with country code)</label><input id="waPhone" value="${shop.waPhone||'919848936875'}" placeholder="919848936875"></div>
+<div class="fg"><label>CallMeBot API Key</label><input id="waKey" value="${shop.waKey||''}" placeholder="Paste your API key here" type="password"></div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+    <input type="checkbox" id="waEnabled" ${shop.waEnabled?'checked':''} style="width:16px;height:16px;accent-color:var(--gold)">
+    Enable hourly reports (sent every hour while POS is open)
+  </label>
+</div>
+<div style="display:flex;gap:8px">
+  <button class="btn-g" style="flex:1" onclick="saveWaSettings()">?? Save</button>
+  <button class="btn-o" onclick="sendWaReport(true)">?? Send Test Now</button>
+</div>
+<div id="waStatus" style="font-size:10px;color:var(--muted);margin-top:8px"></div>
+</div></div>
 <div class="panel" style="max-width:480px;margin-top:14px"><div class="panel-hd">\ud83d\udda8\ufe0f KOT Printer &mdash; KPC307-UEWB</div><div class="panel-bd">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
   <span style="font-size:11px;color:var(--muted)">Status:</span>
@@ -3241,6 +3296,7 @@ function initApp(){
   if(menuItems.length===0){toast('\u2601\ufe0f Loading menu from Google Sheets\u2026');}
   else if(outItemsInit.length)toast('\u26a0\ufe0f '+outItemsInit.length+' items out of stock!','err');
   else if(lowStockItems.length)toast('\u26a0\ufe0f '+lowStockItems.length+' items running low');
+  setTimeout(startWaTimer,5000);
 }
 
 if(checkSession()){
@@ -3598,6 +3654,88 @@ function doRestore(input){
     input.value='';
   };
   reader.readAsText(file);
+}
+
+
+// ════════════════════════════════════════
+// WHATSAPP HOURLY REPORTS — CallMeBot
+// ════════════════════════════════════════
+var _waTimer=null;
+
+function saveWaSettings(){
+  shop.waPhone=document.getElementById('waPhone').value.trim().replace(/[^0-9]/g,'');
+  shop.waKey=document.getElementById('waKey').value.trim();
+  shop.waEnabled=document.getElementById('waEnabled').checked;
+  S.s('shop',shop);
+  startWaTimer();
+  document.getElementById('waStatus').textContent=shop.waEnabled?'\u2705 Reports enabled. Next report in '+(60-new Date().getMinutes())+' min.':'Reports disabled.';
+  toast('WhatsApp settings saved','ok');
+}
+
+function startWaTimer(){
+  if(_waTimer)clearInterval(_waTimer);
+  if(!shop.waEnabled||!shop.waKey)return;
+  // Fire at the top of each hour
+  var msToNextHour=(60-new Date().getMinutes())*60*1000-(new Date().getSeconds()*1000);
+  setTimeout(function(){
+    sendWaReport(false);
+    _waTimer=setInterval(function(){sendWaReport(false);},3600000);
+  }, Math.max(msToNextHour,5000));
+  console.log('DAWAT WA: Next report in '+(msToNextHour/60000).toFixed(1)+' min');
+}
+
+function buildWaMessage(){
+  var now=new Date();
+  var todayStr=now.toDateString();
+  var todOrds=orders.filter(function(o){return sd(o.savedAt).toDateString()===todayStr;});
+  var cashS=todOrds.filter(function(o){return o.payMethod==='CASH';}).reduce(function(s,o){return s+o.total;},0);
+  var upiS=todOrds.filter(function(o){return o.payMethod==='UPI';}).reduce(function(s,o){return s+o.total;},0);
+  var cardS=todOrds.filter(function(o){return o.payMethod==='CARD';}).reduce(function(s,o){return s+o.total;},0);
+  var totalS=todOrds.reduce(function(s,o){return s+o.total;},0);
+  var timeStr=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  var dateStr=now.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  var allTimeRev=orders.reduce(function(s,o){return s+o.total;},0).toFixed(0);
+  var parts=[
+    'DAWAT Sales Update',
+    'Date: '+dateStr+' | Time: '+timeStr,
+    '',
+    'Today Summary',
+    'Orders: '+todOrds.length,
+    'Total: Rs.'+totalS.toFixed(0),
+    'Cash: Rs.'+cashS.toFixed(0),
+    'UPI: Rs.'+upiS.toFixed(0)
+  ];
+  if(cardS>0)parts.push('Card: Rs.'+cardS.toFixed(0));
+  parts.push('');
+  parts.push('All Time: '+orders.length+' orders | Rs.'+allTimeRev);
+  parts.push('Sent by DAWAT POS');
+  return parts.join('%0A');
+}
+function sendWaReport(isTest){
+  if(!shop.waKey){
+    toast('Add CallMeBot API key in Admin \u2192 Settings first','err');
+    return;
+  }
+  var phone=shop.waPhone||'919848936875';
+  var msg=buildWaMessage();
+  var url='https://api.callmebot.com/whatsapp.php?phone='+phone+'&text='+msg+'&apikey='+shop.waKey;
+  fetch(url)
+    .then(function(r){return r.text();})
+    .then(function(resp){
+      if(resp.toLowerCase().includes('message queued')||resp.toLowerCase().includes('message sent')){
+        toast('?? WhatsApp report sent!','ok');
+        if(document.getElementById('waStatus')){
+          document.getElementById('waStatus').textContent='\u2705 Last sent: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+        }
+      }else{
+        toast('WA send failed. Check API key in Settings','err');
+        console.warn('CallMeBot response:',resp);
+      }
+    })
+    .catch(function(e){
+      if(isTest)toast('WA error: '+e.message,'err');
+      console.error('WhatsApp send error:',e);
+    });
 }
 
 </script>
