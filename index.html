@@ -1126,8 +1126,8 @@ function showScreen(name,btn){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(name+'Scrn').classList.add('active');
   if(btn)btn.classList.add('active');
-  if(name==='orders')renderOrders();
-  if(name==='reports')renderReport();
+  if(name==='orders'){renderOrders();_refreshOrderItems();}
+  if(name==='reports'){renderReport();_refreshOrderItems();}
   if(name==='admin'){admTab='cats';document.querySelectorAll('.adm-tab')[0].classList.add('active');renderAdm();}
   if(name==='token')renderTokens();
   if(name==='cash')renderCash();
@@ -1360,6 +1360,38 @@ function setOrdFilter(f){
   });
   renderOrders();
 }
+
+// ── Order item refresh helper ──
+var _ordRefreshing=false;
+function _refreshOrderItems(){
+  if(_ordRefreshing)return;
+  _ordRefreshing=true;
+  gsGet('getOrders').then(function(res){
+    if(res&&res.ok&&res.data) _patchOrdersFromSheets(res.data);
+    _ordRefreshing=false;
+  }).catch(function(){_ordRefreshing=false;});
+}
+
+function _patchOrdersFromSheets(rawOrders){
+  var lmap={};orders.forEach(function(o){lmap[o.invNo]=o;});
+  var changed=false;
+  rawOrders.forEach(function(raw){
+    var mapped=mapOrder(raw);
+    var local=lmap[mapped.invNo];
+    if(local){
+      if(!local.itemsText&&mapped.itemsText){local.itemsText=mapped.itemsText;changed=true;}
+      if((!local.cart||!local.cart.length)&&mapped.cart&&mapped.cart.length){local.cart=mapped.cart;changed=true;}
+    }else if(mapped.invNo>0){orders.push(mapped);lmap[mapped.invNo]=mapped;changed=true;}
+  });
+  if(changed){
+    orders.sort(function(a,b){return b.invNo-a.invNo;});
+    S.s('orders',orders);
+    var as=document.querySelector('.screen.active');
+    if(as&&as.id==='ordersScrn')renderOrders();
+    if(as&&as.id==='reportsScrn')renderReport();
+  }
+}
+
 
 function renderOrders(){
   var q=((document.getElementById('ordSrch')?document.getElementById('ordSrch').value:'')||'').toLowerCase();
@@ -3059,6 +3091,9 @@ function loadFromSheets(onDone){
       orders.sort(function(a,b){return b.invNo-a.invNo;});
       S.s('orders',orders);
       console.log('DAWAT: orders loaded='+fromSheets.length+' localOnly='+localOnly.length);
+      var _as=document.querySelector('.screen.active');
+      if(_as&&_as.id==='ordersScrn')renderOrders();
+      if(_as&&_as.id==='reportsScrn')renderReport();
     }
 
     setSyncStatus('ok');
@@ -3221,25 +3256,9 @@ function loadFromSheetsIndividual(onDone){
 }
 
 function loadOrdersFromSheets(){
-  gsGet('getOrders')
-  .then(function(res){
-    if(!res||!res.ok||!res.data||!res.data.length)return;
-    // Merge Sheets orders with local orders (avoid duplicates by invNo)
-    var localInvNos=new Set(orders.map(function(o){return o.invNo;}));
-    var newOrders=res.data.filter(function(o){return!localInvNos.has(parseInt(o.InvNo||o.invNo));});
-    if(newOrders.length>0){
-      // Map Sheets columns to app format
-      var mapped=newOrders.map(function(o){
-        return mapOrder(o);
-      });
-      orders=orders.concat(mapped);
-      // Sort by invNo descending
-      orders.sort(function(a,b){return b.invNo-a.invNo;});
-      S.s('orders',orders);
-      toast('\u2705 Loaded '+mapped.length+' orders from Sheets','ok');
-    }
-  })
-  .catch(function(){});
+  gsGet('getOrders').then(function(res){
+    if(res&&res.ok&&res.data)_patchOrdersFromSheets(res.data);
+  }).catch(function(){});
 }
 
 // Force clear local orders and reload all from Sheets (fixes savedAt timestamps)
